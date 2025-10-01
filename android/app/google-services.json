@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "584492441445",
+    "project_id": "foodcart360-a8453",
+    "storage_bucket": "foodcart360-a8453.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:584492441445:android:fe93ec6a4e0520e433cb8c",
+        "android_client_info": {
+          "package_name": "com.foodcart360.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "584492441445-pboad5b668hs1n9vr6kg6dhd6g7kgv34.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.foodcart360.app",
+            "certificate_hash": "c1a9e3fbe71d978c75a3bb356cb815663bd3dae9"
+          }
+        },
+        {
+          "client_id": "584492441445-6qf4it5ds461r6jm8jid289fhsp5p48t.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDIA7qXwyrwV9H-FD-rIdLpHCLLxKjoW5Q"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "584492441445-6qf4it5ds461r6jm8jid289fhsp5p48t.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

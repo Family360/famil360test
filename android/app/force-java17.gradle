@@ -1,0 +1,47 @@
+// Force Java 17 for ALL projects including plugins
+allprojects {
+    plugins.withId('com.android.library') {
+        android {
+            compileOptions {
+                sourceCompatibility JavaVersion.VERSION_17
+                targetCompatibility JavaVersion.VERSION_17
+            }
+        }
+    }
+    plugins.withId('com.android.application') {
+        android {
+            compileOptions {
+                sourceCompatibility JavaVersion.VERSION_17
+                targetCompatibility JavaVersion.VERSION_17
+            }
+        }
+    }
+    plugins.withId('org.jetbrains.kotlin.android') {
+        android {
+            kotlinOptions {
+                jvmTarget = '17'
+            }
+        }
+    }
+}
+
+// Specifically target capacitor plugins
+gradle.beforeProject { project ->
+    if (project.name.contains('capacitor-') || project.name.contains('aparajita-')) {
+        project.afterEvaluate {
+            if (project.hasProperty('android')) {
+                project.android.compileOptions {
+                    sourceCompatibility JavaVersion.VERSION_17
+                    targetCompatibility JavaVersion.VERSION_17
+                }
+                try {
+                    project.android.kotlinOptions {
+                        jvmTarget = '17'
+                    }
+                } catch (Exception e) {
+                    // Ignore if kotlinOptions doesn't exist
+                }
+            }
+        }
+    }
+}

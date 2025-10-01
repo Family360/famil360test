@@ -1,10 +1,8 @@
-// src/firebase.ts
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
+import { getFirestore } from "firebase/firestore";
+import { getStorage } from "firebase/storage";
 
-// ----------------------
-// 🔑 Firebase Web Project Configuration from Env Vars
-// ----------------------
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
   authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
@@ -14,17 +12,14 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
-// ----------------------
-// Initialize Firebase App
-// ----------------------
 const app = initializeApp(firebaseConfig);
-
-// ----------------------
-// Initialize Firebase Auth
-// ----------------------
 export const auth = getAuth(app);
+export const db = getFirestore(app);
+export const storage = getStorage(app);
 
-// ----------------------
-// Export Firebase App
-// ----------------------
-export default app;
+export const getFirebaseAuth = () => auth;
+export const getUserProfile = async (uid: string) => {
+  const { Preferences } = await import("@capacitor/preferences");
+  const { value } = await Preferences.get({ key: `user_profile_${uid}` });
+  return value ? JSON.parse(value) : null;
+};
