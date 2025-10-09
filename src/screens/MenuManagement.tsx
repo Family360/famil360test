@@ -1,8 +1,9 @@
 // src/screens/MenuManagement.tsx
-import React, { useState, useEffect, useMemo, useCallback } from "react";
-import { localStorageService, type MenuItem } from "../services/localStorage";
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLanguage } from '@/hooks/useLanguage';
+import { localStorageService, type MenuItem } from "../services/localStorage";
 import { useToast } from '@/components/ui/use-toast';
+import { currencyService } from '@/services/currencyService';
 import { 
   Plus, 
   Edit2, 
@@ -18,53 +19,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-const FREE_MENU_LIMIT = 3;
-
 interface MenuManagementProps {
   onNavigate: (path: string) => void;
 }
 
-const DEFAULT_TRANSLATIONS = {
-  menu_management: 'Menu Management',
-  back_to_dashboard: 'Back to Dashboard',
-  add_item: 'Add Item',
-  menu_items: 'Menu Items',
-  free: 'Free',
-  you_can_add: 'You can add',
-  more_items_free: 'more items for free',
-  upgrade_for_unlimited: 'Upgrade to premium for unlimited menu items',
-  upgrade_to_premium: 'Upgrade to Premium',
-  edit_menu_item: 'Edit Menu Item',
-  add_new_menu_item: 'Add New Menu Item',
-  item_name: 'Item Name',
-  eg_chicken_biryani: 'e.g., Chicken Biryani',
-  price_rupee: 'Price (₹)',
-  eg_150: 'e.g., 150',
-  category: 'Category',
-  eg_main_course_beverages: 'e.g., Main Course, Beverages',
-  description: 'Description',
-  brief_description: 'Brief description of the item',
-  stock: 'Stock',
-  eg_10: 'e.g., 10',
-  update_item: 'Update Item',
-  cancel: 'Cancel',
-  inactive: 'Inactive',
-  deactivate: 'Deactivate',
-  activate: 'Activate',
-  edit: 'Edit',
-  delete: 'Delete',
-  no_menu_items_yet: 'No menu items yet',
-  add_first_menu_item: 'Add your first menu item to get started',
-  add_menu_item: 'Add Menu Item',
-  please_fill_required_fields: 'Please fill all required fields',
-  invalid_price: 'Please enter a valid price',
-  invalid_stock: 'Please enter valid stock quantity',
-  price_too_many_decimals: 'Price can have maximum 2 decimal places',
-  confirm_delete_item: 'Are you sure you want to delete this item?',
-  search_items: 'Search items...',
-  filter_by_category: 'Filter by category',
-  all_categories: 'All Categories',
-};
+const FREE_MENU_LIMIT = 3;
 
 const MenuManagement: React.FC<MenuManagementProps> = ({ onNavigate }) => {
   const { language: currentLanguage } = useLanguage();
@@ -76,6 +35,7 @@ const MenuManagement: React.FC<MenuManagementProps> = ({ onNavigate }) => {
   const [showPricingModal, setShowPricingModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
+  const [currencySymbol, setCurrencySymbol] = useState<string>('$');
   
   const [formData, setFormData] = useState({
     name: "",
@@ -85,19 +45,27 @@ const MenuManagement: React.FC<MenuManagementProps> = ({ onNavigate }) => {
     stock: "0",
   });
 
-  const translate = useCallback(
-    (key: string) => {
-      return DEFAULT_TRANSLATIONS[key as keyof typeof DEFAULT_TRANSLATIONS] || key;
-    },
-    []
-  );
+  const { t } = useLanguage();
+  const translate = useCallback((key: string, params?: Record<string, any>) => t(key, params), [t]);
 
   useEffect(() => {
     loadMenuItems();
+    loadCurrency();
   }, []);
 
-  const loadMenuItems = useCallback(() => {
-    const items = localStorageService.getMenuItems();
+  const loadCurrency = async () => {
+    try {
+      await currencyService.getCurrency();
+      const formatted = currencyService.formatAmountSimple(0);
+      const symbol = formatted.replace(/[0-9,\.\s]/g, '');
+      setCurrencySymbol(symbol);
+    } catch (error) {
+      console.error('Error loading currency:', error);
+    }
+  };
+
+  const loadMenuItems = useCallback(async () => {
+    const items = await localStorageService.getMenuItems();
     setMenuItems(items);
   }, []);
 
@@ -164,13 +132,8 @@ const MenuManagement: React.FC<MenuManagementProps> = ({ onNavigate }) => {
     return true;
   }, [formData, toast, translate]);
 
-  const handleSubmit = useCallback(() => {
+  const handleSubmit = useCallback(async () => {
     if (!validateForm()) return;
-
-    if (!editingItem && menuItems.length >= FREE_MENU_LIMIT) {
-      setShowPricingModal(true);
-      return;
-    }
 
     const menuItem: MenuItem = {
       id: editingItem?.id || localStorageService.generateId(),
@@ -183,16 +146,40 @@ const MenuManagement: React.FC<MenuManagementProps> = ({ onNavigate }) => {
       stock: parseInt(formData.stock) || 0,
     };
 
-    localStorageService.saveMenuItem(menuItem);
-    loadMenuItems();
-    resetForm();
-    
-    toast({
-      title: 'Success',
-      description: editingItem ? 'Item updated successfully' : 'Item added successfully',
-      className: 'bg-green-100 text-green-800',
-    });
-  }, [validateForm, editingItem, menuItems.length, formData, loadMenuItems, toast]);
+    try {
+      if (editingItem) {
+        // Editing existing item - use saveMenuItem directly
+        await localStorageService.saveMenuItem(menuItem);
+      } else {
+        // Adding new item - use addMenuItem which checks limits
+        await localStorageService.addMenuItem(menuItem);
+      }
+      loadMenuItems();
+      resetForm();
+      
+      toast({
+        title: 'Success',
+        description: editingItem ? 'Item updated successfully' : 'Item added successfully',
+        className: 'bg-green-100 text-green-800',
+      });
+    } catch (error: any) {
+      if (error.message === 'FREE_LIMIT_REACHED_PRODUCTS') {
+        toast({
+          title: 'Free Limit Reached',
+          description: 'You have reached the 6 products limit. Upgrade to Premium for unlimited products.',
+          variant: 'destructive',
+        });
+        // Dispatch event to open upgrade modal
+        window.dispatchEvent(new CustomEvent('open-upgrade', { detail: { feature: 'Products' } }));
+      } else {
+        toast({
+          title: 'Error',
+          description: error.message || 'Failed to save item',
+          variant: 'destructive',
+        });
+      }
+    }
+  }, [validateForm, editingItem, formData, loadMenuItems, toast]);
 
   const resetForm = useCallback(() => {
     setFormData({ name: "", price: "", category: "", description: "", stock: "0" });
@@ -352,13 +339,18 @@ const MenuManagement: React.FC<MenuManagementProps> = ({ onNavigate }) => {
                 className="bg-white/50 dark:bg-gray-800/30 border-white/30"
               />
               
-              <Input
-                type="number"
-                placeholder={translate('eg_150')}
-                value={formData.price}
-                onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                className="bg-white/50 dark:bg-gray-800/30 border-white/30"
-              />
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  {translate('price_rupee')} ({currencySymbol})
+                </label>
+                <Input
+                  type="number"
+                  placeholder={translate('eg_150')}
+                  value={formData.price}
+                  onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                  className="bg-white/50 dark:bg-gray-800/30 border-white/30"
+                />
+              </div>
               
               <Input
                 placeholder={translate('eg_main_course_beverages')}
@@ -417,7 +409,7 @@ const MenuManagement: React.FC<MenuManagementProps> = ({ onNavigate }) => {
                               {item.name}
                             </h3>
                             <p className="text-lg font-bold text-green-600 dark:text-green-400">
-                              ₹{item.price.toFixed(2)}
+                              {currencyService.formatAmount(item.price)}
                             </p>
                           </div>
                           <div className="flex gap-1">

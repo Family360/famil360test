@@ -10,8 +10,7 @@ import { useToast } from "@/components/ui/use-toast";
 import ExpensesChart from "@/components/ExpensesChart";
 import ExpensePieChart from "@/components/ExpensePieChart";
 import { Loader2, Trash2, ChefHat, Plus, Search, ArrowLeft, DollarSign, Calendar, FileText } from "lucide-react";
-// Change this line:
-import languageService from '../services/languageService';
+import { useLanguageContext } from '../contexts/LanguageContext';
 import { currencyService } from "../services/currencyService";
 
 interface ExpensesProps {
@@ -28,7 +27,7 @@ const expenseTypes = [
 
 const todayDateString = () => new Date().toISOString().slice(0, 10);
 
-const Expenses: React.FC<ExpensesProps> = ({ onNavigate }) => {
+const Expenses: React.FC<ExpensesProps> = React.memo(({ onNavigate }) => {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [todayExpenses, setTodayExpenses] = useState<Expense[]>([]);
   const [amount, setAmount] = useState("");
@@ -41,33 +40,51 @@ const Expenses: React.FC<ExpensesProps> = ({ onNavigate }) => {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
   const { toast } = useToast();
+  const { t } = useLanguageContext();
 
-  const t = useCallback((key: string) => {
-    return languageService.translate(key);
-  }, []);
+  // Translate display labels for expense categories while keeping stored values (filters) in English
+  const translateExpenseType = useCallback((name: string) => {
+    switch (name) {
+      case 'Raw Material':
+        return t('raw_material');
+      case 'Wages':
+        return t('wages');
+      case 'Utilities':
+        return t('utilities');
+      case 'Transport':
+        return t('transport');
+      case 'Miscellaneous':
+        return t('miscellaneous');
+      default:
+        return name;
+    }
+  }, [t]);
 
   // Load expenses with error handling
   useEffect(() => {
-    try {
-      setIsLoading(true);
-      const all = localStorageService.getExpenses();
-      setExpenses(all);
-      setTodayExpenses(
-        all.filter((e) => new Date(e.date).toISOString().slice(0, 10) === todayDateString())
-      );
-    } catch (error) {
-      toast({
-        title: t("error"),
-        description: t("failed_to_load_expenses"),
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
+    const loadExpenses = async () => {
+      try {
+        setIsLoading(true);
+        const all = await localStorageService.getExpenses();
+        setExpenses(all);
+        setTodayExpenses(
+          all.filter((e) => new Date(e.date).toISOString().slice(0, 10) === todayDateString())
+        );
+      } catch (error) {
+        toast({
+          title: t("error"),
+          description: t("failed_to_load_expenses"),
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    loadExpenses();
   }, [toast, t]);
 
   const handleAddExpense = useCallback(
-    (e: React.FormEvent) => {
+    async (e: React.FormEvent) => {
       e.preventDefault();
       if (!amount || isNaN(+amount) || +amount <= 0) {
         toast({
@@ -86,8 +103,8 @@ const Expenses: React.FC<ExpensesProps> = ({ onNavigate }) => {
           date: todayDateString(),
           createdAt: new Date().toISOString(),
         };
-        localStorageService.saveExpense(expense);
-        const all = localStorageService.getExpenses();
+        await localStorageService.saveExpense(expense);
+        const all = await localStorageService.getExpenses();
         setExpenses(all);
         setTodayExpenses(
           all.filter((e) => new Date(e.date).toISOString().slice(0, 10) === todayDateString())
@@ -114,11 +131,11 @@ const Expenses: React.FC<ExpensesProps> = ({ onNavigate }) => {
     setDeleteId(id);
   }, []);
 
-  const confirmDelete = useCallback(() => {
+  const confirmDelete = useCallback(async () => {
     if (!deleteId) return;
     try {
-      localStorageService.deleteExpense(deleteId);
-      const all = localStorageService.getExpenses();
+      await localStorageService.deleteExpense(deleteId);
+      const all = await localStorageService.getExpenses();
       setExpenses(all);
       setTodayExpenses(
         all.filter((e) => new Date(e.date).toISOString().slice(0, 10) === todayDateString())
@@ -246,7 +263,7 @@ const Expenses: React.FC<ExpensesProps> = ({ onNavigate }) => {
   }, []);
 
   return (
-    <div className="px-4 py-4 pb-24 bg-gradient-to-br from-[#ffffff] via-[#f8f9fa] to-[#e9ecef] dark:from-[#1A1A2E] dark:via-[#16213E] dark:to-[#0F3460] min-h-screen">
+    <div className="px-4 py-4 pb-6 bg-gradient-to-br from-[#ffffff] via-[#f8f9fa] to-[#e9ecef] dark:from-[#1A1A2E] dark:via-[#16213E] dark:to-[#0F3460] min-h-screen">
       <style>
         {`
         @keyframes shimmer {
@@ -318,7 +335,7 @@ const Expenses: React.FC<ExpensesProps> = ({ onNavigate }) => {
       </style>
 
       {/* Animated Background Elements */}
-      <div className="fixed top-0 left-0 w-full h-full pointer-events-none overflow-hidden z-0">
+      <div className="fixed top-0 left-0 w-full h-full pointer-events-none overflow-hidden z-0 bg-blob">
         <div className="absolute top-10 left-5 w-20 h-20 rounded-full bg-[#fff]/20 animate-float"></div>
         <div className="absolute top-30 right-10 w-16 h-16 rounded-full bg-[#fff]/30 animate-float" style={{ animationDelay: "1s" }}></div>
         <div className="absolute bottom-20 left-15 w-24 h-24 rounded-full bg-[#FFF5F0]/20 animate-float" style={{ animationDelay: "2s" }}></div>
@@ -448,7 +465,7 @@ const Expenses: React.FC<ExpensesProps> = ({ onNavigate }) => {
                     }`}
                     aria-label={`Show only ${expenseType} expenses`}
                   >
-                    {expenseType}
+                    {translateExpenseType(expenseType)}
                   </button>
                 ))}
               </div>
@@ -466,8 +483,8 @@ const Expenses: React.FC<ExpensesProps> = ({ onNavigate }) => {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {expenseTypes.map((t) => (
-                      <SelectItem key={t} value={t}>{t}</SelectItem>
+                    {expenseTypes.map((et) => (
+                      <SelectItem key={et} value={et}>{translateExpenseType(et)}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -542,7 +559,7 @@ const Expenses: React.FC<ExpensesProps> = ({ onNavigate }) => {
                   <tbody>
                     {filteredTodayExpenses.map((exp) => (
                       <tr key={exp.id} className="border-b border-white/10 dark:border-gray-700/30 hover:bg-white/10 dark:hover:bg-gray-800/10">
-                        <td className="py-3 px-4 text-gray-800 dark:text-gray-200">{exp.type}</td>
+                        <td className="py-3 px-4 text-gray-800 dark:text-gray-200">{translateExpenseType(exp.type)}</td>
                         <td className="py-3 px-4 text-gray-600 dark:text-gray-400">{exp.description || "—"}</td>
                         <td className="py-3 px-4 text-right text-[#ff7043] dark:text-[#ff9f43] font-medium">
                           {currencyService.formatAmount(exp.amount)}
@@ -603,7 +620,7 @@ const Expenses: React.FC<ExpensesProps> = ({ onNavigate }) => {
                   <tbody>
                     {filteredPrevExpenses.map((exp) => (
                       <tr key={exp.id} className="border-b border-white/10 dark:border-gray-700/30 hover:bg-white/10 dark:hover:bg-gray-800/10">
-                        <td className="py-3 px-4 text-gray-800 dark:text-gray-200">{exp.type}</td>
+                        <td className="py-3 px-4 text-gray-800 dark:text-gray-200">{translateExpenseType(exp.type)}</td>
                         <td className="py-3 px-4 text-gray-600 dark:text-gray-400">{exp.description || "—"}</td>
                         <td className="py-3 px-4 text-gray-600 dark:text-gray-400">{new Date(exp.date).toLocaleDateString()}</td>
                         <td className="py-3 px-4 text-right text-[#ff7043] dark:text-[#ff9f43] font-medium">
@@ -662,6 +679,9 @@ const Expenses: React.FC<ExpensesProps> = ({ onNavigate }) => {
         </Button>
       </div>
     </div>
-);
-};
+  );
+});
+
+Expenses.displayName = 'Expenses';
+
 export default Expenses;

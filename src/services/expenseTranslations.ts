@@ -1,0 +1,147 @@
+// Temporary file with expense translations to be merged into languageService.ts
+export const expenseTranslations = {
+  'All_Types': {
+    en: 'All Types', ar: 'كل الأنواع', hi: 'सभी प्रकार', ur: 'تمام اقسام', zh: '所有类型', tr: 'Tüm Türler', sw: 'Aina Zote', th: 'ทุกประเภท',
+    fil: 'Lahat ng Uri', ja: 'すべてのタイプ', es: 'Todos los Tipos', 'es-MX': 'Todos los Tipos', pt: 'Todos os Tipos', ru: 'Все типы',
+    ml: 'എല്ലാ തരങ്ങളും', bn: 'সব ধরনের', te: 'అన్ని రకాలు', ta: 'அனைத்து வகைகள்', gu: 'બધા પ્રકાર', kn: 'ಎಲ್ಲಾ ಪ್ರಕಾರಗಳು',
+    mr: 'सर्व प्रकार', pa: 'ਸਾਰੀਆਂ ਕਿਸਮਾਂ', ps: 'ټولې ډولونه', ne: 'सबै प्रकार', fr: 'Tous les Types', de: 'Alle Typen',
+    it: 'Tutti i Tipi', ko: '모든 유형', vi: 'Tất cả loại', id: 'Semua Jenis', ms: 'Semua Jenis', fa: 'همه انواع',
+    he: 'כל הסוגים', el: 'Όλοι οι Τύποι', nl: 'Alle typen', pl: 'Wszystkie typy', uk: 'Всі типи', sv: 'Alla typer',
+    da: 'Alle typer', no: 'Alle typer', fi: 'Kaikki tyypit', cs: 'Všechny typy', sk: 'Všetky typy', hu: 'Minden típus',
+    ro: 'Toate tipurile', bg: 'Всички типове', hr: 'Sve vrste', sr: 'Све врсте', sl: 'Vse vrste', ha: 'Duk Nau\'i',
+    yo: 'Gbogbo Iru', ig: 'Ụdị Niile', am: 'ሁሉም ዓይነቶች', jv: 'Kabèh Jinis', pnb: 'سارے قسماں', 'ar-MA': 'كل الأنواع'
+  },
+  'Add_New_Expense': {
+    en: 'Add New Expense', ar: 'إضافة مصروف جديد', hi: 'नया खर्च जोड़ें', ur: 'نیا اخراجات شامل کریں', zh: '添加新支出', tr: 'Yeni Gider Ekle',
+    sw: 'Ongeza Gharama Mpya', th: 'เพิ่มค่าใช้จ่ายใหม่', fil: 'Magdagdag ng Bagong Gastos', ja: '新しい支出を追加', es: 'Agregar Nuevo Gasto',
+    'es-MX': 'Agregar Nuevo Gasto', pt: 'Adicionar Nova Despesa', ru: 'Добавить новый расход', ml: 'പുതിയ ചെലവ് ചേർക്കുക',
+    bn: 'নতুন খরচ যোগ করুন', te: 'కొత్త ఖర్చు జోడించండి', ta: 'புதிய செலவு சேர்க்கவும்', gu: 'નવો ખર્ચ ઉમેરો', kn: 'ಹೊಸ ಖರ್ಚು ಸೇರಿಸಿ',
+    mr: 'नवीन खर्च जोडा', pa: 'ਨਵਾਂ ਖਰਚਾ ਸ਼ਾਮਲ ਕਰੋ', ps: 'نوې لګښت اضافه کړئ', ne: 'नयाँ खर्च थप्नुहोस्', fr: 'Ajouter Nouvelle Dépense',
+    de: 'Neue Ausgabe hinzufügen', it: 'Aggiungi Nuova Spesa', ko: '새 비용 추가', vi: 'Thêm Chi phí Mới', id: 'Tambah Pengeluaran Baru',
+    ms: 'Tambah Perbelanjaan Baru', fa: 'افزودن هزینه جدید', he: 'הוסף הוצאה חדשה', el: 'Προσθήκη Νέου Εξόδου', nl: 'Nieuwe uitgave toevoegen',
+    pl: 'Dodaj nowy wydatek', uk: 'Додати нову витрату', sv: 'Lägg till ny utgift', da: 'Tilføj ny udgift', no: 'Legg til ny utgift',
+    fi: 'Lisää uusi kulu', cs: 'Přidat nový výdaj', sk: 'Pridať nový výdavok', hu: 'Új kiadás hozzáadása', ro: 'Adaugă cheltuială nouă',
+    bg: 'Добави нов разход', hr: 'Dodaj novi trošak', sr: 'Додај нови трошак', sl: 'Dodaj nov strošek', ha: 'Ƙara Sabon Kashe Kuɗi',
+    yo: 'Fi Iná Tuntun Kun', ig: 'Tinye Ego Ọhụrụ', am: 'አዲስ ወጪ ያክሉ', jv: 'Tambah Biaya Anyar', pnb: 'نواں خرچہ شامل کرو', 'ar-MA': 'إضافة مصروف جديد'
+  },
+  'Type': {
+    en: 'Type', ar: 'نوع', hi: 'प्रकार', ur: 'قسم', zh: '类型', tr: 'Tür', sw: 'Aina', th: 'ประเภท', fil: 'Uri', ja: 'タイプ',
+    es: 'Tipo', 'es-MX': 'Tipo', pt: 'Tipo', ru: 'Тип', ml: 'തരം', bn: 'ধরন', te: 'రకం', ta: 'வகை', gu: 'પ્રકાર',
+    kn: 'ಪ್ರಕಾರ', mr: 'प्रकार', pa: 'ਕਿਸਮ', ps: 'ډول', ne: 'प्रकार', fr: 'Type', de: 'Typ', it: 'Tipo', ko: '유형',
+    vi: 'Loại', id: 'Jenis', ms: 'Jenis', fa: 'نوع', he: 'סוג', el: 'Τύπος', nl: 'Type', pl: 'Typ', uk: 'Тип',
+    sv: 'Typ', da: 'Type', no: 'Type', fi: 'Tyyppi', cs: 'Typ', sk: 'Typ', hu: 'Típus', ro: 'Tip', bg: 'Тип',
+    hr: 'Vrsta', sr: 'Врста', sl: 'Vrsta', ha: 'Nau\'i', yo: 'Iru', ig: 'Ụdị', am: 'ዓይነት', jv: 'Jinis', pnb: 'قسم', 'ar-MA': 'نوع'
+  },
+  'Amount': {
+    en: 'Amount', ar: 'المبلغ', hi: 'रक़म', ur: 'رقم', zh: '金额', tr: 'Tutar', sw: 'Kiasi', th: 'จำนวนเงิน', fil: 'Halaga', ja: '金額',
+    es: 'Cantidad', 'es-MX': 'Cantidad', pt: 'Quantia', ru: 'Сумма', ml: 'തുക', bn: 'পরিমাণ', te: 'మొత్తం', ta: 'தொகை',
+    gu: 'રકમ', kn: 'ಮೊತ್ತ', mr: 'रक্कम', pa: 'ਰਕਮ', ps: 'مقدار', ne: 'रकम', fr: 'Montant', de: 'Betrag', it: 'Importo',
+    ko: '금액', vi: 'Số tiền', id: 'Jumlah', ms: 'Jumlah', fa: 'مبلغ', he: 'סכום', el: 'Ποσό', nl: 'Bedrag', pl: 'Kwota',
+    uk: 'Сума', sv: 'Belopp', da: 'Beløb', no: 'Beløp', fi: 'Summa', cs: 'Částka', sk: 'Suma', hu: 'Összeg', ro: 'Sumă',
+    bg: 'Сума', hr: 'Iznos', sr: 'Износ', sl: 'Znesek', ha: 'Adadi', yo: 'Iye', ig: 'Ego', am: 'መጠን', jv: 'Jumlah', pnb: 'رقم', 'ar-MA': 'المبلغ'
+  },
+  'Expense_amount': {
+    en: 'Expense amount', ar: 'مبلغ المصروف', hi: 'खर्च की रकम', ur: 'اخراجات کی رقم', zh: '支出金额', tr: 'Gider tutarı', sw: 'Kiasi cha gharama',
+    th: 'จำนวนค่าใช้จ่าย', fil: 'Halaga ng gastos', ja: '支出額', es: 'Monto del gasto', 'es-MX': 'Monto del gasto', pt: 'Valor da despesa',
+    ru: 'Сумма расхода', ml: 'ചെലവിന്റെ തുക', bn: 'খরচের পরিমাণ', te: 'ఖర్చు మొత్తం', ta: 'செலவு தொகை', gu: 'ખર્ચની રકમ',
+    kn: 'ಖರ್ಚಿನ ಮೊತ್ತ', mr: 'खर्चाची रक्कम', pa: 'ਖਰਚੇ ਦੀ ਰਕਮ', ps: 'لګښت مقدار', ne: 'खर्चको रकम', fr: 'Montant de la dépense',
+    de: 'Ausgabenbetrag', it: 'Importo della spesa', ko: '비용 금액', vi: 'Số tiền chi phí', id: 'Jumlah pengeluaran', ms: 'Jumlah perbelanjaan',
+    fa: 'مبلغ هزینه', he: 'סכום ההוצאה', el: 'Ποσό εξόδου', nl: 'Uitgavenbedrag', pl: 'Kwota wydatku', uk: 'Сума витрат',
+    sv: 'Utgiftsbelopp', da: 'Udgiftsbeløb', no: 'Utgiftsbeløp', fi: 'Kulusumma', cs: 'Částka výdaje', sk: 'Suma výdavku',
+    hu: 'Kiadás összege', ro: 'Suma cheltuielii', bg: 'Сума на разхода', hr: 'Iznos troška', sr: 'Износ трошка', sl: 'Znesek stroška',
+    ha: 'Adadin Kashe Kuɗi', yo: 'Iye Iná', ig: 'Ego Mmefu', am: 'የወጪ መጠን', jv: 'Jumlah biaya', pnb: 'خرچے دی رقم', 'ar-MA': 'مبلغ المصروف'
+  },
+  'Description': {
+    en: 'Description', ar: 'الوصف', hi: 'विवरण', ur: 'تفصیل', zh: '描述', tr: 'Açıklama', sw: 'Maelezo', th: 'คำอธิบาย',
+    fil: 'Paglalarawan', ja: '説明', es: 'Descripción', 'es-MX': 'Descripción', pt: 'Descrição', ru: 'Описание', ml: 'വിവരണം',
+    bn: 'বিবরণ', te: 'వివరణ', ta: 'விவரம்', gu: 'વર્ણન', kn: 'ವಿವರಣೆ', mr: 'वर्णन', pa: 'ਵੇਰਵਾ', ps: 'تفصیل',
+    ne: 'विवरण', fr: 'Description', de: 'Beschreibung', it: 'Descrizione', ko: '설명', vi: 'Mô tả', id: 'Deskripsi',
+    ms: 'Penerangan', fa: 'توضیحات', he: 'תיאור', el: 'Περιγραφή', nl: 'Beschrijving', pl: 'Opis', uk: 'Опис',
+    sv: 'Beskrivning', da: 'Beskrivelse', no: 'Beskrivelse', fi: 'Kuvaus', cs: 'Popis', sk: 'Popis', hu: 'Leírás',
+    ro: 'Descriere', bg: 'Описание', hr: 'Opis', sr: 'Опис', sl: 'Opis', ha: 'Bayani', yo: 'Apejuwe', ig: 'Nkọwa',
+    am: 'መግለጫ', jv: 'Katerangan', pnb: 'تفصیل', 'ar-MA': 'الوصف'
+  },
+  'Details_optional': {
+    en: 'Details (optional)', ar: 'التفاصيل (اختياري)', hi: 'विवरण (वैकल्पिक)', ur: 'تفصیلات (اختیاری)', zh: '详情（可选）',
+    tr: 'Detaylar (isteğe bağlı)', sw: 'Maelezo (hiari)', th: 'รายละเอียด (ทางเลือก)', fil: 'Mga Detalye (opsyonal)', ja: '詳細（オプション）',
+    es: 'Detalles (opcional)', 'es-MX': 'Detalles (opcional)', pt: 'Detalhes (opcional)', ru: 'Детали (необязательно)', ml: 'വിശദാംശങ്ങൾ (ഓപ്ഷണൽ)',
+    bn: 'বিস্তারিত (ঐচ্ছিক)', te: 'వివరాలు (ఐచ్ఛికం)', ta: 'விவரங்கள் (விருப்பம்)', gu: 'વિગતો (વૈકલ્પિક)', kn: 'ವಿವರಗಳು (ಐಚ್ಛಿಕ)',
+    mr: 'तपशील (पर्यायी)', pa: 'ਵੇਰਵੇ (ਵਿਕਲਪਿਕ)', ps: 'تفصیلات (اختیاري)', ne: 'विवरण (वैकल्पिक)', fr: 'Détails (facultatif)',
+    de: 'Details (optional)', it: 'Dettagli (facoltativo)', ko: '세부정보 (선택사항)', vi: 'Chi tiết (tùy chọn)', id: 'Detail (opsional)',
+    ms: 'Butiran (pilihan)', fa: 'جزئیات (اختیاری)', he: 'פרטים (אופציונלי)', el: 'Λεπτομέρειες (προαιρετικό)', nl: 'Details (optioneel)',
+    pl: 'Szczegóły (opcjonalnie)', uk: 'Деталі (необов\'язково)', sv: 'Detaljer (valfritt)', da: 'Detaljer (valgfrit)', no: 'Detaljer (valgfritt)',
+    fi: 'Yksityiskohdat (valinnainen)', cs: 'Podrobnosti (volitelné)', sk: 'Podrobnosti (voliteľné)', hu: 'Részletek (opcionális)',
+    ro: 'Detalii (opțional)', bg: 'Подробности (по избор)', hr: 'Detalji (opcionalno)', sr: 'Детаљи (опционо)', sl: 'Podrobnosti (izbirno)',
+    ha: 'Cikakkun Bayanai (zaɓi)', yo: 'Awon Alaye (yiyan)', ig: 'Nkọwa (nhọrọ)', am: 'ዝርዝር (አማራጭ)', jv: 'Rincian (opsional)',
+    pnb: 'تفصیلات (اختیاری)', 'ar-MA': 'التفاصيل (اختياري)'
+  },
+  'Expense_Description': {
+    en: 'Expense Description', ar: 'وصف المصروف', hi: 'खर्च का विवरण', ur: 'اخراجات کی تفصیل', zh: '支出描述', tr: 'Gider Açıklaması',
+    sw: 'Maelezo ya Gharama', th: 'คำอธิบายค่าใช้จ่าย', fil: 'Paglalarawan ng Gastos', ja: '支出の説明', es: 'Descripción del Gasto',
+    'es-MX': 'Descripción del Gasto', pt: 'Descrição da Despesa', ru: 'Описание расхода', ml: 'ചെലവിന്റെ വിവരണം', bn: 'খরচের বিবরণ',
+    te: 'ఖర్చు వివరణ', ta: 'செலவு விவரம்', gu: 'ખર્ચનું વર્ણન', kn: 'ಖರ್ಚಿನ ವಿವರಣೆ', mr: 'खर्चाचे वर्णन', pa: 'ਖਰਚੇ ਦਾ ਵੇਰਵਾ',
+    ps: 'لګښت تفصیل', ne: 'खर्चको विवरण', fr: 'Description de la Dépense', de: 'Ausgabenbeschreibung', it: 'Descrizione della Spesa',
+    ko: '비용 설명', vi: 'Mô tả Chi phí', id: 'Deskripsi Pengeluaran', ms: 'Penerangan Perbelanjaan', fa: 'توضیحات هزینه',
+    he: 'תיאור ההוצאה', el: 'Περιγραφή Εξόδου', nl: 'Uitgave Beschrijving', pl: 'Opis Wydatku', uk: 'Опис Витрат',
+    sv: 'Utgiftsbeskrivning', da: 'Udgiftsbeskrivelse', no: 'Utgiftsbeskrivelse', fi: 'Kulun Kuvaus', cs: 'Popis Výdaje',
+    sk: 'Popis Výdavku', hu: 'Kiadás Leírása', ro: 'Descrierea Cheltuielii', bg: 'Описание на Разхода', hr: 'Opis Troška',
+    sr: 'Опис Трошка', sl: 'Opis Stroška', ha: 'Bayanan Kashe Kuɗi', yo: 'Apejuwe Iná', ig: 'Nkọwa Mmefu', am: 'የወጪ መግለጫ',
+    jv: 'Katerangan Biaya', pnb: 'خرچے دی تفصیل', 'ar-MA': 'وصف المصروف'
+  },
+  'Add_expense': {
+    en: 'Add Expense', ar: 'إضافة مصروف', hi: 'खर्च जोड़ें', ur: 'اخراجات شامل کریں', zh: '添加支出', tr: 'Gider Ekle',
+    sw: 'Ongeza Gharama', th: 'เพิ่มค่าใช้จ่าย', fil: 'Magdagdag ng Gastos', ja: '支出を追加', es: 'Agregar Gasto',
+    'es-MX': 'Agregar Gasto', pt: 'Adicionar Despesa', ru: 'Добавить расход', ml: 'ചെലവ് ചേർക്കുക', bn: 'খরচ যোগ করুন',
+    te: 'ఖర్చు జోడించండి', ta: 'செலவு சேர்க்கவும்', gu: 'ખર્ચ ઉમેરો', kn: 'ಖರ್ಚು ಸೇರಿಸಿ', mr: 'खर्च जोडा', pa: 'ਖਰਚਾ ਸ਼ਾಮਲ ਕਰੋ',
+    ps: 'لګښت اضافه کړئ', ne: 'खर्च थप्नुहोस्', fr: 'Ajouter Dépense', de: 'Ausgabe hinzufügen', it: 'Aggiungi Spesa',
+    ko: '비용 추가', vi: 'Thêm Chi phí', id: 'Tambah Pengeluaran', ms: 'Tambah Perbelanjaan', fa: 'افزودن هزینه',
+    he: 'הוסף הוצאה', el: 'Προσθήκη Εξόδου', nl: 'Uitgave toevoegen', pl: 'Dodaj Wydatek', uk: 'Додати Витрату',
+    sv: 'Lägg till Utgift', da: 'Tilføj Udgift', no: 'Legg til Utgift', fi: 'Lisää Kulu', cs: 'Přidat Výdaj',
+    sk: 'Pridať Výdavok', hu: 'Kiadás Hozzáadása', ro: 'Adaugă Cheltuială', bg: 'Добави Разход', hr: 'Dodaj Trošak',
+    sr: 'Додај Трошак', sl: 'Dodaj Strošek', ha: 'Ƙara Kashe Kuɗi', yo: 'Fi Iná Kun', ig: 'Tinye Mmefu',
+    am: 'ወጪ ያክሉ', jv: 'Tambah Biaya', pnb: 'خرچہ شامل کرو', 'ar-MA': 'إضافة مصروف'
+  },
+  'Todays_Expenses': {
+    en: 'Today\'s Expenses', ar: 'مصروفات اليوم', hi: 'आज के खर्च', ur: 'آج کے اخراجات', zh: '今日支出', tr: 'Bugünün Giderleri',
+    sw: 'Gharama za Leo', th: 'ค่าใช้จ่ายวันนี้', fil: 'Mga Gastos Ngayong Araw', ja: '今日の支出', es: 'Gastos de Hoy',
+    'es-MX': 'Gastos de Hoy', pt: 'Despesas de Hoje', ru: 'Расходы сегодня', ml: 'ഇന്നത്തെ ചെലവുകൾ', bn: 'আজকের খরচ',
+    te: 'నేటి ఖర్చులు', ta: 'இன்றைய செலவுகள்', gu: 'આજના ખર્ચ', kn: 'ಇಂದಿನ ಖರ್ಚುಗಳು', mr: 'आजचे खर्च', pa: 'ਅੱਜ ਦੇ ਖਰਚੇ',
+    ps: 'نن ورځې لګښتونه', ne: 'आजको खर्च', fr: 'Dépenses d\'Aujourd\'hui', de: 'Heutige Ausgaben', it: 'Spese di Oggi',
+    ko: '오늘의 비용', vi: 'Chi phí Hôm nay', id: 'Pengeluaran Hari Ini', ms: 'Perbelanjaan Hari Ini', fa: 'هزینه‌های امروز',
+    he: 'הוצאות היום', el: 'Έξοδα Σήμερα', nl: 'Uitgaven van Vandaag', pl: 'Dzisiejsze Wydatki', uk: 'Витрати Сьогодні',
+    sv: 'Dagens Utgifter', da: 'Dagens Udgifter', no: 'Dagens Utgifter', fi: 'Tämän Päivän Kulut', cs: 'Dnešní Výdaje',
+    sk: 'Dnešné Výdavky', hu: 'Mai Kiadások', ro: 'Cheltuielile de Astăzi', bg: 'Днешни Разходи', hr: 'Današnji Troškovi',
+    sr: 'Данашњи Трошкови', sl: 'Današnji Stroški', ha: 'Kashe Kuɗin Yau', yo: 'Awon Iná Lónìí', ig: 'Mmefu Taa',
+    am: 'የዛሬ ወጪዎች', jv: 'Biaya Dina Iki', pnb: 'اج دے خرچے', 'ar-MA': 'مصروفات اليوم'
+  },
+  'Items': {
+    en: 'Items', ar: 'عناصر', hi: 'आइटम', ur: 'اشیاء', zh: '项目', tr: 'Öğeler', sw: 'Vitu', th: 'รายการ', fil: 'Mga Item',
+    ja: 'アイテム', es: 'Artículos', 'es-MX': 'Artículos', pt: 'Itens', ru: 'Элементы', ml: 'ഇനങ്ങൾ', bn: 'আইটেম',
+    te: 'అంశాలు', ta: 'பொருட்கள்', gu: 'વસ્તુઓ', kn: 'ವಸ್ತುಗಳು', mr: 'वस्तू', pa: 'ਆਈਟਮਾਂ', ps: 'توکي', ne: 'वस्तुहरू',
+    fr: 'Articles', de: 'Artikel', it: 'Articoli', ko: '항목', vi: 'Mục', id: 'Item', ms: 'Item', fa: 'موارد',
+    he: 'פריטים', el: 'Στοιχεία', nl: 'Items', pl: 'Elementy', uk: 'Елементи', sv: 'Objekt', da: 'Emner',
+    no: 'Elementer', fi: 'Kohteet', cs: 'Položky', sk: 'Položky', hu: 'Elemek', ro: 'Articole', bg: 'Артикули',
+    hr: 'Stavke', sr: 'Ставке', sl: 'Predmeti', ha: 'Abubuwa', yo: 'Awon Nkan', ig: 'Ihe', am: 'እቃዎች',
+    jv: 'Item', pnb: 'شیواں', 'ar-MA': 'عناصر'
+  },
+  'No_Expenses_Recorded_Today': {
+    en: 'No Expenses Recorded Today', ar: 'لا توجد مصروفات مسجلة اليوم', hi: 'आज कोई खर्च दर्ज नहीं', ur: 'آج کوئی اخراجات درج نہیں',
+    zh: '今天没有记录支出', tr: 'Bugün Kayıtlı Gider Yok', sw: 'Hakuna Gharama Zilizorekodiwa Leo', th: 'ไม่มีค่าใช้จ่ายที่บันทึกวันนี้',
+    fil: 'Walang Naitala na Gastos Ngayong Araw', ja: '今日は支出が記録されていません', es: 'No hay Gastos Registrados Hoy',
+    'es-MX': 'No hay Gastos Registrados Hoy', pt: 'Nenhuma Despesa Registrada Hoje', ru: 'Сегодня расходов не зарегистрировано',
+    ml: 'ഇന്ന് ചെലവുകൾ രേഖപ്പെടുത്തിയിട്ടില്ല', bn: 'আজ কোনও খরচ রেকর্ড করা হয়নি', te: 'నేడు ఖర్చులు నమోదు చేయలేదు',
+    ta: 'இன்று எந்த செலவும் பதிவு செய்யப்படவில்லை', gu: 'આજે કોઈ ખર્ચ નોંધાયેલ નથી', kn: 'ಇಂದು ಯಾವುದೇ ಖರ್ಚುಗಳನ್ನು ದಾಖಲಿಸಲಾಗಿಲ್ಲ',
+    mr: 'आज कोणताही खर्च नोंदवलेला नाही', pa: 'ਅੱਜ ਕੋਈ ਖਰਚੇ ਰਿਕਾਰਡ ਨਹੀਂ ਕੀਤੇ ਗਏ', ps: 'نن ورځ هیڅ لګښت ثبت شوی نه دی',
+    ne: 'आज कुनै खर्च रेकर्ड गरिएको छैन', fr: 'Aucune Dépense Enregistrée Aujourd\'hui', de: 'Heute Keine Ausgaben Erfasst',
+    it: 'Nessuna Spesa Registrata Oggi', ko: '오늘 기록된 비용 없음', vi: 'Không có Chi phí Được Ghi Hôm nay',
+    id: 'Tidak Ada Pengeluaran Tercatat Hari Ini', ms: 'Tiada Perbelanjaan Direkodkan Hari Ini', fa: 'امروز هزینه‌ای ثبت نشده',
+    he: 'אין הוצאות שנרשמו היום', el: 'Δεν Καταγράφηκαν Έξοδα Σήμερα', nl: 'Geen Uitgaven Geregistreerd Vandaag',
+    pl: 'Brak Zarejestrowanych Wydatków Dzisiaj', uk: 'Сьогодні Витрат Не Зареєстровано', sv: 'Inga Utgifter Registrerade Idag',
+    da: 'Ingen Udgifter Registreret I dag', no: 'Ingen Utgifter Registrert I dag', fi: 'Ei Kirjattuja Kuluja Tänään',
+    cs: 'Dnes Nejsou Zaznamenány Žádné Výdaje', sk: 'Dnes Nie Sú Zaznamenané Žiadne Výdavky', hu: 'Ma Nincs Rögzített Kiadás',
+    ro: 'Nicio Cheltuială Înregistrată Astăzi', bg: 'Днес Няма Записани Разходи', hr: 'Danas Nije Zabilježen Nijedan Trošak',
+    sr: 'Данас Није Забележен Ниједан Трошак', sl: 'Danes Ni Zabeleženega Stroška', ha: 'Babu Kashe Kuɗi da aka Rubuta Yau',
+    yo: 'Kò Sí Iná Tí A Ṣàkọsílẹ̀ Lónìí', ig: 'Enweghị Mmefu E Dekọrọ Taa', am: 'ዛሬ ምንም ወጪዎች አልተመዘገቡም',
+    jv: 'Ora Ana Biaya Sing Kacathet Dina Iki', pnb: 'اج کوئی خرچے درج نئیں', 'ar-MA': 'لا توجد مصروفات مسجلة اليوم'
+  }
+};

@@ -11,8 +11,11 @@ const OrdersList: React.FC<OrdersListProps> = ({ onNavigate, onBack }) => {
   const [orders, setOrders] = useState<Order[]>([]);
 
   useEffect(() => {
-    setOrders(localStorageService.getOrders());
-    // If you expect orders to change live, consider subscribing or polling
+    const loadOrders = async () => {
+      const fetchedOrders = await localStorageService.getOrders();
+      setOrders(fetchedOrders);
+    };
+    loadOrders();
   }, []);
 
   return (

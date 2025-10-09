@@ -116,7 +116,7 @@ const SubscriptionReminderModal = ({
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="max-w-[90vw] sm:max-w-sm md:max-w-md mx-auto p-4 bg-white/95 dark:bg-gray-900/95 rounded-2xl shadow-2xl">
+        <DialogContent className="max-w-[90vw] sm:max-w-sm md:max-w-md mx-auto p-4 bg-white/95 dark:bg-gray-900/95 rounded-2xl shadow-2xl" description="Subscription reminder dialog with trial status and upgrade options">
           <DialogHeader className="text-center space-y-4">
             <div className="mx-auto w-14 h-14 bg-gradient-to-br from-orange-500 to-red-500 rounded-xl flex items-center justify-center shadow-md">
               {isTrialExpired ? (
@@ -197,7 +197,7 @@ const SubscriptionReminderModal = ({
       </Dialog>
 
       <Dialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
-        <DialogContent className="max-w-[90vw] sm:max-w-sm p-4 bg-white/95 dark:bg-gray-900/95 rounded-2xl shadow-2xl">
+        <DialogContent className="max-w-[90vw] sm:max-w-sm p-4 bg-white/95 dark:bg-gray-900/95 rounded-2xl shadow-2xl" description="Confirmation dialog to upgrade subscription plan">
           <DialogHeader className="text-center space-y-2">
             <div className="mx-auto w-12 h-12 bg-yellow-100 dark:bg-yellow-900/30 rounded-full flex items-center justify-center">
               <AlertTriangle className="w-6 h-6 text-yellow-500" aria-hidden="true" />

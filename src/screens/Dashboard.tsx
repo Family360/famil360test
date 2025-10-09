@@ -1,12 +1,13 @@
 // src/screens/Dashboard.tsx
 import { useState, useEffect, useCallback } from 'react';
-import Button from '../components/Button';
+import { Button } from '../components/ui/button';
 import CashBalanceModal from '../components/CashBalanceModal';
 import { localStorageService } from '../services/localStorage';
 import { currencyService } from '../services/currencyService';
 import { SubscriptionService } from '../services/subscriptionService';
 import { useToast } from '@/components/ui/use-toast';
-import { useLanguage } from '@/hooks/useLanguage';
+import { useLanguageContext } from '../contexts/LanguageContext';
+import { SUPPORTED_LANGUAGES as IMPORTED_LANGUAGES } from '../services/languageService';
 import {
   List,
   DollarSign,
@@ -33,10 +34,14 @@ import {
   Coffee,
   ArrowRight,
   ChevronDown,
-} from 'lucide-react'; // Added missing imports
+  MessageSquare,
+  HardDrive,
+  Users,
+} from 'lucide-react';
+import { getAutonym } from '@/utils/locale';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
-import { Order } from '../services/localStorage';
+import { Order, InventoryItem } from '../services/localStorage';
 
 interface DashboardProps {
   userProfile: { fullName: string; email: string };
@@ -45,120 +50,24 @@ interface DashboardProps {
   loadingSubscription?: boolean;
 }
 
-interface SUPPORTED_LANGUAGES {
-  code: string;
-  name: string;
-  nativeName: string;
-  rtl: boolean;
-  flag: string;
-}
-
-const SUPPORTED_LANGUAGES: SUPPORTED_LANGUAGES[] = [
-  { code: 'en', name: 'English', nativeName: 'English', rtl: false, flag: '🇺🇸' },
-  { code: 'ar', name: 'العربية (Arabic)', nativeName: 'العربية', rtl: true, flag: '🇸🇦' },
-  { code: 'hi', name: 'हिन्दी (Hindi)', nativeName: 'हिन्दी', rtl: false, flag: '🇮🇳' },
-  { code: 'ur', name: 'اردو (Urdu)', nativeName: 'اردو', rtl: true, flag: '🇵🇰' },
-  { code: 'zh', name: '中文 (Chinese)', nativeName: '中文', rtl: false, flag: '🇨🇳' },
-  { code: 'tr', name: 'Türkçe', nativeName: 'Türkçe', rtl: false, flag: '🇹🇷' },
-  { code: 'sw', name: 'Kiswahili', nativeName: 'Kiswahili', rtl: false, flag: '🇰🇪' },
-  { code: 'th', name: 'ไทย (Thai)', nativeName: 'ไทย', rtl: false, flag: '🇹🇭' },
-  { code: 'fil', name: 'Filipino', nativeName: 'Filipino', rtl: false, flag: '🇵🇭' },
-  { code: 'ja', name: '日本語 (Japanese)', nativeName: '日本語', rtl: false, flag: '🇯🇵' },
-  { code: 'es', name: 'Español', nativeName: 'Español', rtl: false, flag: '🇪🇸' },
-  { code: 'pt', name: 'Português', nativeName: 'Português', rtl: false, flag: '🇵🇹' },
-  { code: 'ru', name: 'Русский (Russian)', nativeName: 'Русский', rtl: false, flag: '🇷🇺' },
-  { code: 'ml', name: 'മലയാളം (Malayalam)', nativeName: 'മലയാളം', rtl: false, flag: '🇮🇳' },
-  { code: 'bn', name: 'বাংলা (Bengali)', nativeName: 'বাংলা', rtl: false, flag: '🇧🇩' },
-  { code: 'te', name: 'తెలుగు (Telugu)', nativeName: 'తెలుగు', rtl: false, flag: '🇮🇳' },
-  { code: 'ta', name: 'தமிழ் (Tamil)', nativeName: 'தமிழ்', rtl: false, flag: '🇮🇳' },
-  { code: 'gu', name: 'ગુજરાતી (Gujarati)', nativeName: 'ગુજરાતી', rtl: false, flag: '🇮🇳' },
-  { code: 'kn', name: 'ಕನ್ನಡ (Kannada)', nativeName: 'ಕನ್ನಡ', rtl: false, flag: '🇮🇳' },
-  { code: 'mr', name: 'मराठी (Marathi)', nativeName: 'मराठी', rtl: false, flag: '🇮🇳' },
-  { code: 'pa', name: 'ਪੰਜਾਬੀ (Punjabi)', nativeName: 'ਪੰਜਾਬੀ', rtl: false, flag: '🇮🇳' },
-  { code: 'ps', name: 'پښتو (Pashto)', nativeName: 'پښتو', rtl: true, flag: '🇦🇫' },
-  { code: 'fr', name: 'Français', nativeName: 'Français', rtl: false, flag: '🇫🇷' },
-  { code: 'de', name: 'Deutsch', nativeName: 'Deutsch', rtl: false, flag: '🇩🇪' },
-  { code: 'it', name: 'Italiano', nativeName: 'Italiano', rtl: false, flag: '🇮🇹' },
-  { code: 'ko', name: '한국어 (Korean)', nativeName: '한국어', rtl: false, flag: '🇰🇷' },
-  { code: 'vi', name: 'Tiếng Việt', nativeName: 'Tiếng Việt', rtl: false, flag: '🇻🇳' },
-  { code: 'id', name: 'Bahasa Indonesia', nativeName: 'Bahasa Indonesia', rtl: false, flag: '🇮🇩' },
-  { code: 'ms', name: 'Bahasa Melayu', nativeName: 'Bahasa Melayu', rtl: false, flag: '🇲🇾' },
-  { code: 'fa', name: 'فارسی (Persian)', nativeName: 'فارسی', rtl: true, flag: '🇮🇷' },
-  { code: 'he', name: 'עברית (Hebrew)', nativeName: 'עברית', rtl: true, flag: '🇮🇱' },
-  { code: 'el', name: 'Ελληνικά (Greek)', nativeName: 'Ελληνικά', rtl: false, flag: '🇬🇷' },
-];
-
-const DEFAULT_TRANSLATIONS = {
-  dashboard: 'Dashboard',
-  chef: 'Chef',
-  Your_food_cart_control_center: 'Your food cart control center',
-  change_language: 'Change Language',
-  language: 'Language',
-  refresh: 'Refresh',
-  refresh_data: 'Refresh Data',
-  orders: 'Orders',
-  total_sales: 'Total Sales',
-  inventory: 'Inventory',
-  expenses: 'Expenses',
-  opening: 'Opening',
-  closing: 'Closing',
-  in_hand: 'In Hand',
-  cash_balance: 'Cash Balance',
-  Available_cash: 'Available Cash',
-  End_of_day: 'End of Day',
-  quick_actions: 'Quick Actions',
-  new_sale: 'New Sale',
-  menu: 'Menu',
-  reports: 'Reports',
-  recent_activity: 'Recent Activity',
-  view_all: 'View All',
-  no_orders_today: 'No orders today',
-  sales_will_appear_here: 'Sales will appear here',
-  settings: 'Settings',
-  Todays_orders: "Today's Orders",
-  Todays_revenue: "Today's Revenue",
-  Low_stock_items: 'Low Stock Items',
-  stock_levels_good: 'Stock levels good',
-  Pending_expenses: 'Pending Expenses',
-  failed_to_load_dashboard_data: 'Failed to load dashboard data',
-  error: 'Error',
-  unable_to_load_dashboard_data: 'Unable to load dashboard data',
-  latest_data_loaded_successfully: 'Latest data loaded successfully',
-  retry: 'Retry',
-  low_stock_alert: 'Low Stock Alert',
-  items_low_in_stock: 'items are low in stock',
-  View_low_stock_items: 'View low stock items',
-  inventory_status: 'Inventory Status',
-  switch_to_light_mode: 'Switch to Light Mode',
-  switch_to_dark_mode: 'Switch to Dark Mode',
-  create_new_sale: 'Create New Sale',
-  view_orders: 'View Orders',
-  view_menu: 'View Menu',
-  view_inventory: 'View Inventory',
-  view_reports: 'View Reports',
-  manage_cash_balance: 'Manage Cash Balance',
-  view_opening_balance: 'View Opening Balance',
-  view_cash_in_hand: 'View Cash In Hand',
-  view_closing_balance: 'View Closing Balance',
-  view_all_orders: 'View All Orders',
-  retry_loading_data: 'Retry Loading Data',
-  cash_balance_updated: 'Cash balance updated successfully',
-};
+// Use all 47 languages from languageService
+const SUPPORTED_LANGUAGES = IMPORTED_LANGUAGES;
 
 const Dashboard: React.FC<DashboardProps> = ({ userProfile, onNavigate, isSubscribed }) => {
   const { toast } = useToast();
-  const { language: currentLanguage, changeLanguage } = useLanguage();
+  const { t, currentLanguage, changeLanguage } = useLanguageContext();
 
   const translate = useCallback(
     (key: string, params?: Record<string, any>) => {
-      try {
-        return DEFAULT_TRANSLATIONS[key as keyof typeof DEFAULT_TRANSLATIONS] || key;
-      } catch (error) {
-        console.warn(`Translation failed for key: ${key}`, error);
-        return DEFAULT_TRANSLATIONS[key as keyof typeof DEFAULT_TRANSLATIONS] || key;
+      let translation = t(key);
+      if (params) {
+        Object.entries(params).forEach(([paramKey, paramValue]) => {
+          translation = translation.replace(`{${paramKey}}`, String(paramValue));
+        });
       }
+      return translation;
     },
-    []
+    [t]
   );
 
   const [stats, setStats] = useState({
@@ -181,15 +90,17 @@ const Dashboard: React.FC<DashboardProps> = ({ userProfile, onNavigate, isSubscr
   const [forceRender, setForceRender] = useState(0);
   const [showCashModal, setShowCashModal] = useState(false);
 
-  const loadDashboardData = useCallback(() => {
+  const loadDashboardData = useCallback(async () => {
     try {
       setIsLoading(true);
-      const todayOrders = localStorageService.getTodayOrders();
-      const todaySales = localStorageService.getTodaySales();
-      const lowStockItems = localStorageService.getLowStockItems();
-      const todayExpenses = localStorageService.getTodayExpenses();
-      const allOrders = localStorageService.getOrders();
-      const balance = localStorageService.getCashBalance();
+      
+      // Use await for all async localStorageService calls
+      const todayOrders = await localStorageService.getTodayOrders();
+      const todaySales = await localStorageService.getTodaySales();
+      const lowStockItems = await localStorageService.getLowStockItems();
+      const todayExpenses = await localStorageService.getTodayExpenses();
+      const allOrders = await localStorageService.getOrders();
+      const balance = await localStorageService.getCashBalance();
 
       setStats({
         orders: todayOrders.length,
@@ -206,7 +117,15 @@ const Dashboard: React.FC<DashboardProps> = ({ userProfile, onNavigate, isSubscr
           closingBalance: balance.closingBalance,
           cashInHand: balance.cashInHand,
         });
+      } else {
+        // Initialize with default values if no balance exists
+        setCashBalance({
+          openingBalance: 0,
+          closingBalance: 0,
+          cashInHand: 0,
+        });
       }
+      
       setError(null);
     } catch (err) {
       const errorMessage = (err as Error).message || translate('failed_to_load_dashboard_data');
@@ -224,29 +143,34 @@ const Dashboard: React.FC<DashboardProps> = ({ userProfile, onNavigate, isSubscr
     }
   }, [toast, translate]);
 
-  const refreshData = useCallback(() => {
+  const refreshData = useCallback(async () => {
     setIsRefreshing(true);
-    setTimeout(() => {
+    try {
+      await loadDashboardData();
       toast({
         title: translate('dashboard'),
         description: translate('latest_data_loaded_successfully'),
         className: 'bg-gradient-to-r from-green-400 to-teal-500 text-white shadow-lg rounded-lg',
       });
-      loadDashboardData();
-    }, 800);
+    } catch (error) {
+      console.error('Refresh failed:', error);
+    }
   }, [loadDashboardData, toast, translate]);
 
   const handleCashBalanceSave = useCallback(
-    (balances: { openingBalance: number; closingBalance: number; cashInHand: number }) => {
+    async (balances: { openingBalance: number; closingBalance: number; cashInHand: number }) => {
       try {
-        localStorageService.saveCashBalance({ ...balances, lastUpdated: new Date().toISOString() });
+        await localStorageService.saveCashBalance({ 
+          ...balances, 
+          lastUpdated: new Date().toISOString() 
+        });
         setCashBalance(balances);
         toast({
           title: translate('cash_balance'),
           description: translate('cash_balance_updated'),
           className: 'bg-gradient-to-r from-green-400 to-teal-500 text-white shadow-lg rounded-lg',
         });
-        refreshData();
+        await refreshData();
       } catch (error) {
         const errorMessage = (error as Error).message || 'Failed to update cash balance';
         console.error('Failed to save cash balance:', error);
@@ -262,35 +186,43 @@ const Dashboard: React.FC<DashboardProps> = ({ userProfile, onNavigate, isSubscr
   );
 
   useEffect(() => {
-    loadDashboardData();
-    // Add trial reminder
-    if (isSubscribed && SubscriptionService.shouldShowReminder()) {
-      toast({
-        title: 'Trial Reminder',
-        description: 'Your 7-day trial is ending soon! Subscribe to continue.',
-        className: 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200',
-        duration: 5000,
-      });
-      SubscriptionService.markReminderShown();
-    }
+    const initializeDashboard = async () => {
+      await loadDashboardData();
+      
+      // Add trial reminder
+      if (isSubscribed && SubscriptionService.shouldShowReminder()) {
+        toast({
+          title: 'Trial Reminder',
+          description: 'Your 7-day trial is ending soon! Subscribe to continue.',
+          className: 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200',
+          duration: 5000,
+        });
+        SubscriptionService.markReminderShown();
+      }
+    };
+
+    initializeDashboard();
   }, [loadDashboardData, isSubscribed, toast]);
 
   const currentLang = SUPPORTED_LANGUAGES.find(lang => lang.code === currentLanguage) || SUPPORTED_LANGUAGES[0];
   const isRtl = currentLang.rtl;
 
   const handleLanguageChange = useCallback(
-    (code: string) => {
+    async (code: string) => {
       try {
         changeLanguage(code);
         setIsLanguageSheetOpen(false);
         setForceRender(prev => prev + 1);
-        setTimeout(() => {
+        
+        // Small delay to ensure language change is processed
+        setTimeout(async () => {
+          const lang = SUPPORTED_LANGUAGES.find(l => l.code === code) || SUPPORTED_LANGUAGES[0];
           toast({
             title: 'Language Changed',
-            description: `Language switched to ${SUPPORTED_LANGUAGES.find(l => l.code === code)?.nativeName || 'Selected Language'}`,
+            description: `Language switched to ${getAutonym(lang.code, lang.name)}`,
             className: 'bg-gradient-to-r from-blue-400 to-purple-500 text-white shadow-lg rounded-lg',
           });
-          loadDashboardData();
+          await loadDashboardData();
         }, 100);
       } catch (error) {
         console.error('Language change failed:', error);
@@ -314,21 +246,26 @@ const Dashboard: React.FC<DashboardProps> = ({ userProfile, onNavigate, isSubscr
   }, [darkMode]);
 
   useEffect(() => {
-    if (typeof window !== 'undefined' && window.localStorage) {
-      const savedDarkMode = localStorage.getItem('darkMode') === 'true';
-      setDarkMode(savedDarkMode);
-      document.documentElement.classList.toggle('dark', savedDarkMode);
-    } else {
-      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-      setDarkMode(mediaQuery.matches);
-      document.documentElement.classList.toggle('dark', mediaQuery.matches);
-      const listener = (e: MediaQueryListEvent) => {
-        setDarkMode(e.matches);
-        document.documentElement.classList.toggle('dark', e.matches);
-      };
-      mediaQuery.addEventListener('change', listener);
-      return () => mediaQuery.removeEventListener('change', listener);
-    }
+    const initializeDarkMode = () => {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        const savedDarkMode = localStorage.getItem('darkMode') === 'true';
+        setDarkMode(savedDarkMode);
+        document.documentElement.classList.toggle('dark', savedDarkMode);
+      } else {
+        const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+        setDarkMode(mediaQuery.matches);
+        document.documentElement.classList.toggle('dark', mediaQuery.matches);
+        
+        const listener = (e: MediaQueryListEvent) => {
+          setDarkMode(e.matches);
+          document.documentElement.classList.toggle('dark', e.matches);
+        };
+        mediaQuery.addEventListener('change', listener);
+        return () => mediaQuery.removeEventListener('change', listener);
+      }
+    };
+
+    initializeDarkMode();
   }, []);
 
   const StatSkeleton = () => (
@@ -368,7 +305,7 @@ const Dashboard: React.FC<DashboardProps> = ({ userProfile, onNavigate, isSubscr
     <div
       key={forceRender}
       className={cn(
-        'min-h-screen px-4 py-4 bg-gradient-to-br from-[#ffffff] via-[#f8f9fa] to-[#e9ecef] dark:from-[#1A1A2E] dark:via-[#16213E] dark:to-[#0F3460] overflow-hidden',
+        'min-h-screen px-4 py-4 bg-gradient-to-br from-[#ffffff] via-[#f8f9fa] to-[#e9ecef] dark:from-[#1A1A2E] dark:via-[#16213E] dark:to-[#0F3460]',
         isRtl ? 'direction-rtl' : ''
       )}
       dir={isRtl ? 'rtl' : 'ltr'}
@@ -461,7 +398,7 @@ const Dashboard: React.FC<DashboardProps> = ({ userProfile, onNavigate, isSubscr
       </style>
 
       {/* Animated Background Elements */}
-      <div className="fixed top-0 left-0 w-full h-full pointer-events-none overflow-hidden z-0">
+      <div className="fixed top-0 left-0 w-full h-full pointer-events-none overflow-hidden z-0 bg-blob">
         <div className="absolute top-10 left-5 w-20 h-20 rounded-full bg-[#e3f2fd]/50 animate-float"></div>
         <div className="absolute top-30 right-10 w-16 h-16 rounded-full bg-[#f3e5f5]/50 animate-float" style={{ animationDelay: '1s' }}></div>
         <div className="absolute bottom-20 left-15 w-24 h-24 rounded-full bg-[#e8f5e8]/50 animate-float" style={{ animationDelay: '2s' }}></div>
@@ -488,10 +425,8 @@ const Dashboard: React.FC<DashboardProps> = ({ userProfile, onNavigate, isSubscr
             </div>
             <p className="text-gray-600 dark:text-gray-300 text-sm mt-2 animate-fade-in delay-100 flex items-center">
               <Calendar size={14} className="mr-1" />
-              {translate('Your_food_cart_control_center')} –{' '}
-              {new Date().toLocaleTimeString('en-US', { timeZone: 'Asia/Karachi' })},{' '}
-              {new Date().toLocaleDateString('en-US', {
-                timeZone: 'Asia/Karachi',
+              {translate('Your_food_cart_control_center')} – {new Date().toLocaleTimeString()},{' '}
+              {new Date().toLocaleDateString(undefined, {
                 weekday: 'long',
                 year: 'numeric',
                 month: 'long',
@@ -508,7 +443,7 @@ const Dashboard: React.FC<DashboardProps> = ({ userProfile, onNavigate, isSubscr
                   aria-label={translate('change_language')}
                 >
                   <span className="text-sm font-medium">
-                    {currentLang.flag} {currentLang.nativeName}
+                    {getAutonym(currentLang.code, currentLang.name)}
                   </span>
                   <ChevronDown size={16} className="text-[#ff7043]" />
                 </Button>
@@ -537,8 +472,7 @@ const Dashboard: React.FC<DashboardProps> = ({ userProfile, onNavigate, isSubscr
                       onClick={() => handleLanguageChange(lang.code)}
                       aria-label={`Change language to ${lang.name}`}
                     >
-                      <span className="text-base mr-3">{lang.flag}</span>
-                      <span className="font-medium">{lang.nativeName}</span>
+                      <span className="font-medium">{getAutonym(lang.code, lang.name)}</span>
                       {currentLanguage === lang.code && (
                         <div className="ml-auto w-2 h-2 bg-[#ff7043] rounded-full"></div>
                       )}
@@ -572,7 +506,7 @@ const Dashboard: React.FC<DashboardProps> = ({ userProfile, onNavigate, isSubscr
               {error}
             </p>
             <Button
-              variant="primary"
+              variant="default"
               onClick={refreshData}
               className="rounded-xl px-4 py-2 text-sm font-medium bg-gradient-to-r from-[#ff7043] to-[#ff9f43] hover:from-[#ff8a5b] hover:to-[#ffb86c] shadow-md"
               aria-label={translate('retry_loading_data')}
@@ -763,7 +697,7 @@ const Dashboard: React.FC<DashboardProps> = ({ userProfile, onNavigate, isSubscr
         </h2>
         <div className="grid grid-cols-3 gap-3">
           <Button
-            variant="primary"
+            variant="default"
             className="h-16 flex flex-col items-center justify-center bg-gradient-to-br from-[#ff7043] to-[#ff9f43] text-white rounded-xl hover:from-[#ff8a5b] hover:to-[#ffb86c] transition-all duration-300 shadow-md hover:shadow-xl transform hover:-translate-y-1 mobile-card"
             onClick={() => onNavigate('newSale')}
             aria-label={translate('create_new_sale')}
@@ -773,7 +707,7 @@ const Dashboard: React.FC<DashboardProps> = ({ userProfile, onNavigate, isSubscr
           </Button>
 
           <Button
-            variant="secondary"
+            variant="outline"
             className="h-16 flex flex-col items-center justify-center bg-gradient-to-br from-[#ffffff]/70 to-[#f5f5f5]/70 text-[#ff80ab] rounded-xl hover:bg-[#ffffff]/90 transition-all duration-300 shadow-sm hover:shadow-md transform hover:-translate-y-1 mobile-card"
             onClick={() => onNavigate('orders')}
             aria-label={translate('view_orders')}
@@ -783,7 +717,17 @@ const Dashboard: React.FC<DashboardProps> = ({ userProfile, onNavigate, isSubscr
           </Button>
 
           <Button
-            variant="secondary"
+            variant="outline"
+            className="h-16 flex flex-col items-center justify-center bg-gradient-to-br from-[#ffffff]/70 to-[#f5f5f5]/70 text-[#25D366] rounded-xl hover:bg-[#ffffff]/90 transition-all duration-300 shadow-sm hover:shadow-md transform hover:-translate-y-1 mobile-card"
+            onClick={() => onNavigate('whatsapp')}
+            aria-label={translate('whatsapp_setup')}
+          >
+            <MessageSquare size={20} className="mb-1.5" />
+            <span className="text-xs font-medium">{translate('whatsapp')}</span>
+          </Button>
+
+          <Button
+            variant="outline"
             className="h-16 flex flex-col items-center justify-center bg-gradient-to-br from-[#ffffff]/70 to-[#f5f5f5]/70 text-[#ff9f43] rounded-xl hover:bg-[#ffffff]/90 transition-all duration-300 shadow-sm hover:shadow-md transform hover:-translate-y-1 mobile-card"
             onClick={() => onNavigate('menu')}
             aria-label={translate('view_menu')}
@@ -793,7 +737,7 @@ const Dashboard: React.FC<DashboardProps> = ({ userProfile, onNavigate, isSubscr
           </Button>
 
           <Button
-            variant="secondary"
+            variant="outline"
             className="h-16 flex flex-col items-center justify-center bg-gradient-to-br from-[#ffffff]/70 to-[#f5f5f5]/70 text-[#ff80ab] rounded-xl hover:bg-[#ffffff]/90 transition-all duration-300 shadow-sm hover:shadow-md transform hover:-translate-y-1 mobile-card"
             onClick={() => onNavigate('inventory')}
             aria-label={translate('view_inventory')}
@@ -803,17 +747,27 @@ const Dashboard: React.FC<DashboardProps> = ({ userProfile, onNavigate, isSubscr
           </Button>
 
           <Button
-            variant="secondary"
-            className="h-16 flex flex-col items-center justify-center bg-gradient-to-br from-[#ffffff]/70 to-[#f5f5f5]/70 text-[#ffab91] rounded-xl hover:bg-[#ffffff]/90 transition-all duration-300 shadow-sm hover:shadow-md transform hover:-translate-y-1 mobile-card"
-            onClick={() => onNavigate('reports')}
-            aria-label={translate('view_reports')}
+            variant="outline"
+            className="h-16 flex flex-col items-center justify-center bg-gradient-to-br from-[#ffffff]/70 to-[#f5f5f5]/70 text-[#8b5cf6] rounded-xl hover:bg-[#ffffff]/90 transition-all duration-300 shadow-sm hover:shadow-md transform hover:-translate-y-1 mobile-card"
+            onClick={() => onNavigate('tip-distribution')}
+            aria-label={translate('staff')}
           >
-            <BarChart3 size={20} className="mb-1.5" />
-            <span className="text-xs font-medium">{translate('reports')}</span>
+            <Users size={20} className="mb-1.5" />
+            <span className="text-xs font-medium">{translate('staff')}</span>
           </Button>
 
           <Button
-            variant="secondary"
+            variant="outline"
+            className="h-16 flex flex-col items-center justify-center bg-gradient-to-br from-[#ffffff]/70 to-[#f5f5f5]/70 text-[#ffab91] rounded-xl hover:bg-[#ffffff]/90 transition-all duration-300 shadow-sm hover:shadow-md transform hover:-translate-y-1 mobile-card"
+            onClick={() => onNavigate('analytics')}
+            aria-label={translate('analytics')}
+          >
+            <BarChart3 size={20} className="mb-1.5" />
+            <span className="text-xs font-medium">{translate('analytics')}</span>
+          </Button>
+
+          <Button
+            variant="outline"
             className="h-16 flex flex-col items-center justify-center bg-gradient-to-br from-[#ffffff]/70 to-[#f5f5f5]/70 text-[#ff7043] rounded-xl hover:bg-[#ffffff]/90 transition-all duration-300 shadow-sm hover:shadow-md transform hover:-translate-y-1 mobile-card"
             onClick={() => setShowCashModal(true)}
             aria-label={translate('manage_cash_balance')}
@@ -825,7 +779,7 @@ const Dashboard: React.FC<DashboardProps> = ({ userProfile, onNavigate, isSubscr
       </div>
 
       {/* Recent Activity */}
-      <div className="glass-card p-4 shadow-md animate-fade-in delay-400 relative z-10 mb-20">
+      <div className="glass-card p-4 shadow-md animate-fade-in delay-400 relative z-10 mb-6">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100 flex items-center">
             <Coffee size={20} className="mr-2 text-[#ff7043]" />

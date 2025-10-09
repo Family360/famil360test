@@ -1,52 +1,29 @@
+// Top-level build file where you can add configuration options common to all sub-projects/modules.
+
 buildscript {
-repositories {
-google()
-mavenCentral()
-maven { url 'https://maven.google.com' } // fallback
+    
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:8.7.2'
+        classpath 'com.google.gms:google-services:4.4.2'
+
+        // NOTE: Do not place your application dependencies here; they belong
+        // in the individual module build.gradle files
+    }
 }
-dependencies {
-classpath 'com.android.tools.build:gradle:8.9.1'
-classpath 'org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.22'
-classpath 'com.google.gms:google-services:4.4.3'
-}
-}
+
+apply from: "variables.gradle"
+
 allprojects {
-repositories {
-google()
-mavenCentral()
-maven { url 'https://maven.google.com' }
+    repositories {
+        google()
+        mavenCentral()
+    }
 }
-afterEvaluate { project ->
-if (project.hasProperty('android')) {
-project.android.compileOptions {
-sourceCompatibility JavaVersion.VERSION_17
-targetCompatibility JavaVersion.VERSION_17
-}
-if (project.plugins.hasPlugin('org.jetbrains.kotlin.android')) {
-project.android.kotlinOptions {
-jvmTarget = '17'
-}
-}
-}
-}
-}
-gradle.projectsEvaluated {
-allprojects { project ->
-if (project.name.contains('capacitor-') || project.name.contains('aparajita-')) {
-if (project.hasProperty('android')) {
-project.android.compileOptions {
-sourceCompatibility JavaVersion.VERSION_17
-targetCompatibility JavaVersion.VERSION_17
-}
-try {
-project.android.kotlinOptions {
-jvmTarget = '17'
-}
-} catch (Exception e) { }
-}
-}
-}
-}
-tasks.register("clean", Delete) {
-delete rootProject.buildDir
+
+task clean(type: Delete) {
+    delete rootProject.buildDir
 }

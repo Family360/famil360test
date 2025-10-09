@@ -21,8 +21,17 @@ export function useLanguage() {
     languageService.setLanguage(lang);
   };
 
-  const t = (key: string, params: Record<string, string | number> = {}) => {
-    return languageService.translate(key, params);
+  const t = (key: string, params?: Record<string, string | number>) => {
+    let translation = languageService.translate(key);
+    
+    // Replace parameters in translation if provided
+    if (params) {
+      Object.entries(params).forEach(([paramKey, paramValue]) => {
+        translation = translation.replace(`{${paramKey}}`, String(paramValue));
+      });
+    }
+    
+    return translation;
   };
 
   return { 

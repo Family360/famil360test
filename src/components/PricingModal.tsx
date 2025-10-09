@@ -66,6 +66,7 @@ const PricingModal = ({ isOpen, onClose }: PricingModalProps) => {
       <DialogContent
         className="max-w-[90vw] sm:max-w-md md:max-w-lg lg:max-w-xl mx-auto p-4 bg-white/95 dark:bg-gray-900/95 border-0 rounded-2xl shadow-2xl max-h-[90vh] overflow-y-auto"
         aria-labelledby="pricing-modal-title"
+        description="Choose a subscription plan to upgrade your FoodCart360 account"
       >
         <DialogHeader className="text-center space-y-2 mb-4">
           <DialogTitle
@@ -127,12 +128,7 @@ const PricingModal = ({ isOpen, onClose }: PricingModalProps) => {
 
               {/* Features List */}
               <ul className="space-y-2 mb-4" role="list" aria-label={`Features for ${plan.name}`}>
-                {[
-                  "Unlimited menu items",
-                  "Advanced analytics",
-                  "Priority support",
-                  "Custom branding",
-                ].map((feature, featureIndex) => (
+                {plan.features?.map((feature, featureIndex) => (
                   <li
                     key={featureIndex}
                     className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400"

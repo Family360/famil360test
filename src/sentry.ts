@@ -5,7 +5,7 @@ Sentry.init({
   dsn: import.meta.env.VITE_SENTRY_DSN,
   integrations: [Sentry.browserTracingIntegration()],
   tracesSampleRate: import.meta.env.PROD ? 0.2 : 1.0,
-  enabled: import.meta.env.PROD || !Capacitor.isNativePlatform(),
+  enabled: true, // Enable always, including debug mobile for better error capture
   environment: import.meta.env.MODE,
   release: 'foodcart360@0.0.1'
 });

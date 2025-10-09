@@ -2,13 +2,17 @@ import React, { useEffect, useState, useCallback, useMemo, useRef } from "react"
 import Button from "../components/Button";
 import Input from "../components/Input";
 import { localStorageService } from "../services/localStorage";
-import languageService from '../services/languageService';
+import { useLanguageContext } from '../contexts/LanguageContext';
+import { SUPPORTED_LANGUAGES } from '../services/languageService';
 import { currencyService } from "../services/currencyService";
 import { useToast } from "@/components/ui/use-toast";
-import { ChevronDown, Moon, Sun, Bell, Download, LogOut, Lock, ArrowLeft, Settings as SettingsIcon, User, Shield, Database, Info, Languages } from "lucide-react";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { ChevronDown, Moon, Sun, Bell, Download, LogOut, Lock, ArrowLeft, Settings as SettingsIcon, User, Shield, Database, Info, Languages, HelpCircle } from "lucide-react";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetDescription } from "@/components/ui/sheet";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
+import BackupRestoreSettings from "@/components/BackupRestoreSettings";
+import PrivacyScreen from "@/components/PrivacyScreen";
+import OnboardingTutorial, { HelpIcon } from "@/components/OnboardingTutorial";
 
 // Define the AppSettings interface that matches localStorage Settings
 interface AppSettings {
@@ -24,9 +28,9 @@ interface SettingsProps {
 }
 
 const defaultSettings: AppSettings = {
-  currency: "₹",
+  currency: "USD",
   language: "en",
-  country: "India",
+  country: "United States",
   theme: "light",
   notifications: true,
 };
@@ -73,63 +77,57 @@ function useOnClickOutside<T extends HTMLElement = HTMLElement>(
   }, [ref, handler]);
 }
 
-// Moved constants outside component to prevent recreation on every render
-const languages = [
-  { code: "en", name: "English", nativeName: "English", rtl: false, flag: "🇺🇸" },
-  { code: "ar", name: "العربية (Arabic)", nativeName: "العربية", rtl: true, flag: "🇸🇦" },
-  { code: "hi", name: "हिन्दी (Hindi)", nativeName: "हिन्दी", rtl: false, flag: "🇮🇳" },
-  { code: "ur", name: "اردو (Urdu)", nativeName: "اردو", rtl: true, flag: "🇵🇰" },
-  { code: "zh", name: "中文 (Chinese)", nativeName: "中文", rtl: false, flag: "🇨🇳" },
-  { code: "tr", name: "Türkçe", nativeName: "Türkçe", rtl: false, flag: "🇹🇷" },
-  { code: "sw", name: "Kiswahili", nativeName: "Kiswahili", rtl: false, flag: "🇰🇪" },
-  { code: "th", name: "ไทย (Thai)", nativeName: "ไทย", rtl: false, flag: "🇹🇭" },
-  { code: "fil", name: "Filipino", nativeName: "Filipino", rtl: false, flag: "🇵🇭" },
-  { code: "ja", name: "日本語 (Japanese)", nativeName: "日本語", rtl: false, flag: "🇯🇵" },
-  { code: "es", name: "Español", nativeName: "Español", rtl: false, flag: "🇪🇸" },
-  { code: "pt", name: "Português", nativeName: "Português", rtl: false, flag: "🇵🇹" },
-  { code: "ru", name: "Русский (Russian)", nativeName: "Русский", rtl: false, flag: "🇷🇺" },
-  { code: "ml", name: "മലയാളം (Malayalam)", nativeName: "മലയാളം", rtl: false, flag: "🇮🇳" },
-  { code: "bn", name: "বাংলা (Bengali)", nativeName: "বাংলা", rtl: false, flag: "🇧🇩" },
-  { code: "te", name: "తెలుగు (Telugu)", nativeName: "తెలుగు", rtl: false, flag: "🇮🇳" },
-  { code: "ta", name: "தமிழ் (Tamil)", nativeName: "தமிழ்", rtl: false, flag: "🇮🇳" },
-  { code: "gu", name: "ગુજરાતી (Gujarati)", nativeName: "ગુજરાતી", rtl: false, flag: "🇮🇳" },
-  { code: "kn", name: "ಕನ್ನಡ (Kannada)", nativeName: "ಕನ್ನಡ", rtl: false, flag: "🇮🇳" },
-  { code: "mr", name: "मराठी (Marathi)", nativeName: "मराठी", rtl: false, flag: "🇮🇳" },
-  { code: "pa", name: "ਪੰਜਾਬੀ (Punjabi)", nativeName: "ਪੰਜਾਬੀ", rtl: false, flag: "🇮🇳" },
-  { code: "ps", name: "پښتو (Pashto)", nativeName: "पश्तो", rtl: true, flag: "🇦🇫" },
-  { code: "fr", name: "Français", nativeName: "Français", rtl: false, flag: "🇫🇷" },
-  { code: "de", name: "Deutsch", nativeName: "Deutsch", rtl: false, flag: "🇩🇪" },
-  { code: "it", name: "Italiano", nativeName: "Italiano", rtl: false, flag: "🇮🇹" },
-  { code: "ko", name: "한국어 (Korean)", nativeName: "한국어", rtl: false, flag: "🇰🇷" },
-  { code: "vi", name: "Tiếng Việt", nativeName: "Tiếng Việt", rtl: false, flag: "🇻🇳" },
-  { code: "id", name: "Bahasa Indonesia", nativeName: "Bahasa Indonesia", rtl: false, flag: "🇮🇩" },
-  { code: "ms", name: "Bahasa Melayu", nativeName: "Bahasa Melayu", rtl: false, flag: "🇲🇾" },
-  { code: "fa", name: "فارسی (Persian)", nativeName: "فارسی", rtl: true, flag: "🇮🇷" },
-  { code: "he", name: "עברית (Hebrew)", nativeName: "עברית", rtl: true, flag: "🇮🇱" },
-  { code: "el", name: "Ελληνικά (Greek)", nativeName: "Ελληνικά", rtl: false, flag: "🇬🇷" },
-];
+// Use languages from languageService (includes all 47 languages)
+const languages = SUPPORTED_LANGUAGES;
 
 const currencies = [
-  { code: "INR", name: "Indian Rupee", symbol: "₹" },
-  { code: "USD", name: "US Dollar", symbol: "$" },
-  { code: "EUR", name: "Euro", symbol: "€" },
-  { code: "GBP", name: "British Pound", symbol: "£" },
-  { code: "JPY", name: "Japanese Yen", symbol: "¥" },
-  { code: "CAD", name: "Canadian Dollar", symbol: "C$" },
-  { code: "AUD", name: "Australian Dollar", symbol: "A$" },
-  { code: "ZAR", name: "South African Rand", symbol: "R" },
-  { code: "RUB", name: "Russian Ruble", symbol: "₽" },
-  { code: "CNY", name: "Chinese Yuan", symbol: "¥" },
-  { code: "CHF", name: "Swiss Franc", symbol: "₣" },
-  { code: "SEK", name: "Swedish Krona", symbol: "Kr" },
-  { code: "KRW", name: "South Korean Won", symbol: "₩" },
-  { code: "ILS", name: "Israeli Shekel", symbol: "₪" },
-  { code: "NGN", name: "Nigerian Naira", symbol: "₦" },
-  { code: "PKR", name: "Pakistani Rupee", symbol: "₨" },
-  { code: "CRC", name: "Costa Rican Colón", symbol: "₡" },
-  { code: "LKR", name: "Sri Lankan Rupee", symbol: "₨" },
-  { code: "NPR", name: "Nepalese Rupee", symbol: "₹" },
-  { code: "GHS", name: "Ghanaian Cedi", symbol: "₵" },
+  { code: "USD", name: "US Dollar", symbol: "$", country: "🇺🇸 United States" },
+  { code: "EUR", name: "Euro", symbol: "€", country: "🇪🇺 European Union" },
+  { code: "GBP", name: "British Pound", symbol: "£", country: "🇬🇧 United Kingdom" },
+  { code: "INR", name: "Indian Rupee", symbol: "₹", country: "🇮🇳 India" },
+  { code: "JPY", name: "Japanese Yen", symbol: "¥", country: "🇯🇵 Japan" },
+  { code: "CAD", name: "Canadian Dollar", symbol: "C$", country: "🇨🇦 Canada" },
+  { code: "AUD", name: "Australian Dollar", symbol: "A$", country: "🇦🇺 Australia" },
+  { code: "CHF", name: "Swiss Franc", symbol: "Fr", country: "🇨🇭 Switzerland" },
+  { code: "CNY", name: "Chinese Yuan", symbol: "¥", country: "🇨🇳 China" },
+  { code: "PKR", name: "Pakistani Rupee", symbol: "₨", country: "🇵🇰 Pakistan" },
+  { code: "BDT", name: "Bangladeshi Taka", symbol: "৳", country: "🇧🇩 Bangladesh" },
+  { code: "AED", name: "UAE Dirham", symbol: "د.إ", country: "🇦🇪 UAE" },
+  { code: "SAR", name: "Saudi Riyal", symbol: "﷼", country: "🇸🇦 Saudi Arabia" },
+  { code: "ZAR", name: "South African Rand", symbol: "R", country: "🇿🇦 South Africa" },
+  { code: "NGN", name: "Nigerian Naira", symbol: "₦", country: "🇳🇬 Nigeria" },
+  { code: "EGP", name: "Egyptian Pound", symbol: "£", country: "🇪🇬 Egypt" },
+  { code: "KES", name: "Kenyan Shilling", symbol: "KSh", country: "🇰🇪 Kenya" },
+  { code: "MXN", name: "Mexican Peso", symbol: "$", country: "🇲🇽 Mexico" },
+  { code: "BRL", name: "Brazilian Real", symbol: "R$", country: "🇧🇷 Brazil" },
+  { code: "ARS", name: "Argentine Peso", symbol: "$", country: "🇦🇷 Argentina" },
+  { code: "CLP", name: "Chilean Peso", symbol: "$", country: "🇨🇱 Chile" },
+  { code: "COP", name: "Colombian Peso", symbol: "$", country: "🇨🇴 Colombia" },
+  { code: "SGD", name: "Singapore Dollar", symbol: "S$", country: "🇸🇬 Singapore" },
+  { code: "MYR", name: "Malaysian Ringgit", symbol: "RM", country: "🇲🇾 Malaysia" },
+  { code: "THB", name: "Thai Baht", symbol: "฿", country: "🇹🇭 Thailand" },
+  { code: "IDR", name: "Indonesian Rupiah", symbol: "Rp", country: "🇮🇩 Indonesia" },
+  { code: "PHP", name: "Philippine Peso", symbol: "₱", country: "🇵🇭 Philippines" },
+  { code: "VND", name: "Vietnamese Dong", symbol: "₫", country: "🇻🇳 Vietnam" },
+  { code: "KRW", name: "South Korean Won", symbol: "₩", country: "🇰🇷 South Korea" },
+  { code: "NZD", name: "New Zealand Dollar", symbol: "NZ$", country: "🇳🇿 New Zealand" },
+  { code: "HKD", name: "Hong Kong Dollar", symbol: "HK$", country: "🇭🇰 Hong Kong" },
+  { code: "TWD", name: "Taiwan Dollar", symbol: "NT$", country: "🇹🇼 Taiwan" },
+  { code: "TRY", name: "Turkish Lira", symbol: "₺", country: "🇹🇷 Turkey" },
+  { code: "RUB", name: "Russian Ruble", symbol: "₽", country: "🇷🇺 Russia" },
+  { code: "PLN", name: "Polish Zloty", symbol: "zł", country: "🇵🇱 Poland" },
+  { code: "SEK", name: "Swedish Krona", symbol: "kr", country: "🇸🇪 Sweden" },
+  { code: "NOK", name: "Norwegian Krone", symbol: "kr", country: "🇳🇴 Norway" },
+  { code: "DKK", name: "Danish Krone", symbol: "kr", country: "🇩🇰 Denmark" },
+  { code: "ILS", name: "Israeli Shekel", symbol: "₪", country: "🇮🇱 Israel" },
+  { code: "LKR", name: "Sri Lankan Rupee", symbol: "Rs", country: "🇱🇰 Sri Lanka" },
+  { code: "NPR", name: "Nepalese Rupee", symbol: "रू", country: "🇳🇵 Nepal" },
+  { code: "GHS", name: "Ghanaian Cedi", symbol: "₵", country: "🇬🇭 Ghana" },
+  { code: "CRC", name: "Costa Rican Colón", symbol: "₡", country: "🇨🇷 Costa Rica" },
+  { code: "QAR", name: "Qatari Riyal", symbol: "﷼", country: "🇶🇦 Qatar" },
+  { code: "KWD", name: "Kuwaiti Dinar", symbol: "د.ك", country: "🇰🇼 Kuwait" },
+  { code: "OMR", name: "Omani Rial", symbol: "﷼", country: "🇴🇲 Oman" },
+  { code: "BHD", name: "Bahraini Dinar", symbol: "ب.د", country: "🇧🇭 Bahrain" },
 ];
 
 const securityQuestions = [
@@ -143,8 +141,10 @@ const securityQuestions = [
 const PRIVACY_POLICY_URL = "https://docs.google.com/document/d/1_xwPf0grP6HwbBkpnilaBdNgZ7jS-IaDuGRNig7D6lk/edit?usp=sharing";
 
 const Settings: React.FC<SettingsProps> = ({ onNavigate }) => {
+  const { t, changeLanguage, currentLanguage } = useLanguageContext();
   const [settings, setSettings] = useState<AppSettings>(defaultSettings);
   const [isLanguageSheetOpen, setIsLanguageSheetOpen] = useState(false);
+  const [isCurrencySheetOpen, setIsCurrencySheetOpen] = useState(false);
   const [isPasswordResetOpen, setIsPasswordResetOpen] = useState(false);
   const [passwordResetData, setPasswordResetData] = useState({
     securityAnswer: "",
@@ -164,15 +164,6 @@ const Settings: React.FC<SettingsProps> = ({ onNavigate }) => {
     return () => window.removeEventListener('resize', checkIsMobile);
   }, []);
 
-  const t = useCallback((key: string, params?: Record<string, string | number>) => {
-    let translation = languageService.translate(key);
-    if (params) {
-      Object.entries(params).forEach(([key, value]) => {
-        translation = translation.replace(`{${key}}`, value.toString());
-      });
-    }
-    return translation;
-  }, []);
 
   // Random security question
   const randomQuestion = useMemo(
@@ -181,22 +172,24 @@ const Settings: React.FC<SettingsProps> = ({ onNavigate }) => {
   );
 
   // Load settings on mount
-  const loadSettings = useCallback(() => {
+  const loadSettings = useCallback(async () => {
     try {
-      const saved = localStorageService.getSettings();
+      const saved = await localStorageService.getSettings();
       if (saved) {
-        // Ensure all required fields are present
+        // Get current theme from document or use saved theme
+        const currentTheme = document.documentElement.classList.contains("dark") ? "dark" : "light";
+        const themeToUse = saved?.theme || currentTheme;
+
         const completeSettings: AppSettings = {
           currency: saved.currency || defaultSettings.currency,
-          language: saved.language || defaultSettings.language,
+          language: saved.language || currentLanguage || defaultSettings.language,
           country: saved.country || defaultSettings.country,
-          theme: (saved.theme as "light" | "dark") || defaultSettings.theme,
+          theme: (themeToUse as "light" | "dark") || defaultSettings.theme,
           notifications: saved.notifications !== undefined ? saved.notifications : defaultSettings.notifications,
         };
         setSettings(completeSettings);
         currencyService.setCurrency(completeSettings.currency);
-        languageService.setLanguage(completeSettings.language);
-        document.documentElement.classList.toggle("dark", completeSettings.theme === "dark");
+        // Do not call changeLanguage here; only change when the user selects a language.
       }
     } catch (error) {
       toast({
@@ -205,7 +198,7 @@ const Settings: React.FC<SettingsProps> = ({ onNavigate }) => {
         variant: "destructive",
       });
     }
-  }, [toast, t]);
+  }, [toast, t, currentLanguage]);
 
   useEffect(() => {
     loadSettings();
@@ -222,7 +215,7 @@ const Settings: React.FC<SettingsProps> = ({ onNavigate }) => {
         });
         return;
       }
-      if (field === "currency" && !currencies.some((curr) => curr.symbol === value)) {
+      if (field === "currency" && !currencies.some((curr) => curr.code === value || curr.symbol === value)) {
         toast({
           title: t("invalid_currency"),
           description: t("invalid_currency_desc"),
@@ -237,7 +230,7 @@ const Settings: React.FC<SettingsProps> = ({ onNavigate }) => {
       if (field === "currency") {
         currencyService.setCurrency(value as string);
       } else if (field === "language") {
-        languageService.setLanguage(value as string);
+        changeLanguage(value as string);
       } else if (field === "theme") {
         document.documentElement.classList.toggle("dark", value === "dark");
       }
@@ -247,7 +240,7 @@ const Settings: React.FC<SettingsProps> = ({ onNavigate }) => {
         localStorageService.saveSettings(newSettings);
       }
     },
-    [settings, toast, t]
+    [settings, toast, t, changeLanguage]
   );
 
   // Handle settings save with debounce
@@ -374,15 +367,16 @@ const handleSave = useCallback(
   // Close sheet when clicking outside
   useOnClickOutside(sheetRef, () => {
     if (isLanguageSheetOpen) setIsLanguageSheetOpen(false);
+    if (isCurrencySheetOpen) setIsCurrencySheetOpen(false);
     if (isPasswordResetOpen) setIsPasswordResetOpen(false);
   });
 
-  const currentLang = languages.find((lang) => lang.code === settings.language);
+  const currentLang = languages.find((lang) => lang.code === (settings.language || currentLanguage));
   const isRtl = currentLang?.rtl;
 
   return (
     <div 
-      className="px-4 py-4 pb-24 bg-gradient-to-br from-[#ffffff] via-[#f8f9fa] to-[#e9ecef] dark:from-[#1A1A2E] dark:via-[#16213E] dark:to-[#0F3460] min-h-screen"
+      className="px-4 py-4 pb-6 bg-gradient-to-br from-[#ffffff] via-[#f8f9fa] to-[#e9ecef] dark:from-[#1A1A2E] dark:via-[#16213E] dark:to-[#0F3460] min-h-screen"
       dir={isRtl ? "rtl" : "ltr"}
     >
       <style>
@@ -471,7 +465,7 @@ const handleSave = useCallback(
       </style>
 
       {/* Animated Background Elements */}
-      <div className="fixed top-0 left-0 w-full h-full pointer-events-none overflow-hidden z-0">
+      <div className="fixed top-0 left-0 w-full h-full pointer-events-none overflow-hidden z-0 bg-blob">
         <div className="absolute top-10 left-5 w-20 h-20 rounded-full bg-[#FFD7C8]/20 animate-float"></div>
         <div className="absolute top-30 right-10 w-16 h-16 rounded-full bg-[#FFECE0]/30 animate-float" style={{ animationDelay: "1s" }}></div>
         <div className="absolute bottom-20 left-15 w-24 h-24 rounded-full bg-[#FFF5F0]/20 animate-float" style={{ animationDelay: "2s" }}></div>
@@ -498,6 +492,9 @@ const handleSave = useCallback(
               {t("Manage_Your_Preferences")} – {new Date().toLocaleTimeString()}, {new Date().toLocaleDateString(undefined, { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
             </p>
           </div>
+          <div className="flex items-center gap-2">
+            <HelpIcon className="animate-fade-in delay-200" />
+          </div>
         </div>
         <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-r from-transparent via-white/10 to-transparent animate-shimmer z-0" />
       </div>
@@ -514,7 +511,7 @@ const handleSave = useCallback(
             {settings.theme === "dark" ? t("dark_mode") : t("light_mode")}
           </span>
           <span className="flex items-center">
-            {currentLang?.flag} {currentLang?.name || t("english")}
+            {currentLang?.name || t("english")}
           </span>
           <span className="flex items-center">{settings.currency} {t("currency")}</span>
           <span className="flex items-center">
@@ -537,14 +534,11 @@ const handleSave = useCallback(
               className="w-full justify-between text-left bg-white/30 dark:bg-gray-800/30 border-white/10 dark:border-gray-700/30 min-h-[44px]"
               aria-label={t("select_language")}
             >
-              <span className="flex items-center">
-                <span className="text-lg mr-2">{currentLang?.flag}</span>
-                <span
-                  dir={currentLang?.rtl ? "rtl" : "ltr"}
-                  className={currentLang?.rtl ? "text-right flex-1" : "flex-1"}
-                >
-                  {currentLang?.name || t("select_language")}
-                </span>
+              <span
+                dir={currentLang?.rtl ? "rtl" : "ltr"}
+                className={currentLang?.rtl ? "text-right flex-1" : "flex-1"}
+              >
+                {currentLang?.name || t("select_language")}
               </span>
               <ChevronDown className="ml-2 text-muted-foreground" size={20} />
             </Button>
@@ -556,6 +550,9 @@ const handleSave = useCallback(
           >
             <SheetHeader>
               <SheetTitle className="text-gray-800 dark:text-gray-100">{t("language")}</SheetTitle>
+              <SheetDescription className="sr-only">
+                {t("select_language") || "Select your preferred language"}
+              </SheetDescription>
             </SheetHeader>
             <div className="mt-4 space-y-2 max-h-[70vh] overflow-y-auto pr-2">
               {languages.map((lang) => (
@@ -574,7 +571,6 @@ const handleSave = useCallback(
                   }}
                   aria-label={`Select ${lang.name} language`}
                 >
-                  <span className="text-base mr-3">{lang.flag}</span>
                   {lang.name}
                 </div>
               ))}
@@ -592,28 +588,66 @@ const handleSave = useCallback(
         <form className="space-y-6" onSubmit={handleSave}>
           {/* Currency Selection */}
           <div>
-            <label htmlFor="currency-select" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               {t("Currency")}
             </label>
-            <div className="grid grid-cols-3 gap-2 currency-grid">
-              {currencies.slice(0, 6).map((currency) => (
-                <button
-                  key={currency.code}
+            <Sheet open={isCurrencySheetOpen} onOpenChange={setIsCurrencySheetOpen}>
+              <SheetTrigger asChild>
+                <Button
                   type="button"
-                  className={cn(
-                    "p-3 rounded-xl text-center transition-all duration-200 min-h-[44px] currency-button",
-                    settings.currency === currency.symbol
-                      ? "bg-[#ff7043]/20 text-[#ff7043] font-medium shadow-sm"
-                      : "bg-white/30 dark:bg-gray-800/30 text-gray-700 dark:text-gray-300 hover:bg-white/40 dark:hover:bg-gray-800/40"
-                  )}
-                  onClick={() => handleChange("currency", currency.symbol)}
-                  aria-label={`Select ${currency.name} currency`}
+                  variant="outline"
+                  className="w-full justify-between text-left bg-white/30 dark:bg-gray-800/30 border-white/10 dark:border-gray-700/30 min-h-[44px]"
+                  aria-label={t("select_currency")}
                 >
-                  <div className="font-bold text-lg">{currency.symbol}</div>
-                  <div className="text-xs truncate">{currency.code}</div>
-                </button>
-              ))}
-            </div>
+                  <span className="flex items-center">
+                    <span className="text-lg mr-2 font-bold">{currencies.find(c => c.code === settings.currency)?.symbol || "$"}</span>
+                    <span className="flex-1">
+                      {currencies.find(c => c.code === settings.currency)?.name || "US Dollar"} ({settings.currency})
+                    </span>
+                  </span>
+                  <ChevronDown className="ml-2 text-muted-foreground" size={20} />
+                </Button>
+              </SheetTrigger>
+              <SheetContent
+                side={isMobile ? "bottom" : "right"}
+                className="w-full sm:w-[400px] glass-card border-l border-white/10 max-h-[80vh] sm:max-h-full"
+                ref={sheetRef}
+              >
+                <SheetHeader>
+                  <SheetTitle className="text-gray-800 dark:text-gray-100">{t("select_currency")}</SheetTitle>
+                  <SheetDescription className="sr-only">
+                    {t("select_your_preferred_currency") || "Select your preferred currency for transactions"}
+                  </SheetDescription>
+                </SheetHeader>
+                <div className="mt-4 space-y-2 max-h-[70vh] overflow-y-auto pr-2">
+                  {currencies.map((currency) => (
+                    <div
+                      key={currency.code}
+                      className={cn(
+                        "p-3 rounded-xl cursor-pointer transition-all duration-200 text-sm min-h-[44px] flex items-center justify-between",
+                        settings.currency === currency.code
+                          ? "bg-white/30 dark:bg-gray-800/30 text-[#ff7043] font-medium shadow-sm"
+                          : "hover:bg-white/20 dark:hover:bg-gray-800/20 text-gray-700 dark:text-gray-300"
+                      )}
+                      onClick={() => {
+                        handleChange("currency", currency.code);
+                        setIsCurrencySheetOpen(false);
+                      }}
+                      aria-label={`Select ${currency.name} currency`}
+                    >
+                      <div className="flex items-center flex-1">
+                        <span className="text-lg mr-3 font-bold w-8">{currency.symbol}</span>
+                        <div className="flex-1">
+                          <div className="font-medium">{currency.name}</div>
+                          <div className="text-xs opacity-70">{currency.country}</div>
+                        </div>
+                      </div>
+                      <span className="text-xs opacity-60 ml-2">{currency.code}</span>
+                    </div>
+                  ))}
+                </div>
+              </SheetContent>
+            </Sheet>
           </div>
 
           {/* Theme Toggle */}
@@ -698,6 +732,9 @@ const handleSave = useCallback(
             >
               <SheetHeader>
                 <SheetTitle className="text-gray-800 dark:text-gray-100">{t("reset_password")}</SheetTitle>
+                <SheetDescription className="sr-only">
+                  {t("reset_password_desc") || "Reset your password by answering security question"}
+                </SheetDescription>
               </SheetHeader>
               <form onSubmit={handlePasswordReset} className="mt-4 space-y-4">
                 <div>
@@ -786,6 +823,12 @@ const handleSave = useCallback(
         </div>
       </div>
 
+      {/* Backup & Restore */}
+      <BackupRestoreSettings className="animate-fade-in delay-300" />
+
+      {/* Privacy & Data Transparency */}
+      <PrivacyScreen className="animate-fade-in delay-400" />
+
       {/* Data Management */}
       <div className="glass-card p-5 mb-6 animate-fade-in mobile-card">
         <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4 flex items-center">
@@ -865,6 +908,9 @@ const handleSave = useCallback(
           <span className="text-xs">{t("export")}</span>
         </button>
       </nav>
+
+      {/* Onboarding Tutorial - Shows on first visit */}
+      <OnboardingTutorial />
     </div>
   );
 };

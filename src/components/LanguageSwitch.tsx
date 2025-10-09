@@ -1,4 +1,5 @@
 import React, { useState, useEffect, memo } from 'react';
+import { getAutonym } from '../utils/locale';
 
 // Define interface for language service
 interface LanguageService {
@@ -74,7 +75,7 @@ const LanguageOption = memo(({ lang, isSelected }: { lang: typeof SUPPORTED_LANG
     dir={lang.rtl ? 'rtl' : 'ltr'} 
     className={`${lang.rtl ? 'text-right' : 'text-left'} ${isSelected ? 'bg-blue-100 dark:bg-blue-900' : ''}`}
   >
-    {lang.flag} {lang.name}
+    {getAutonym(lang.code, lang.name)}
   </option>
 ));
 

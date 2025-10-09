@@ -1,6 +1,6 @@
-import { Purchases, PurchasesOffering, CustomerInfo } from '@revenuecat/purchases-capacitor';
+import { Purchases, PurchasesOffering, PurchasesPackage, CustomerInfo } from '@revenuecat/purchases-capacitor';
 import { Capacitor } from '@capacitor/core';
-import { revenueCatConfig, ENTITLEMENT_ID, PRODUCT_IDS } from '../config/revenuecat';
+import { revenueCatConfig, ENTITLEMENT_ID, OFFERING_IDS } from '../config/revenuecat';
 import { SecureStorage } from './secureStorage';
 import { toast } from 'react-hot-toast';
 
@@ -270,6 +270,62 @@ export class RevenueCatService {
     } catch (error: any) {
       console.error('Error getting offerings:', error);
       return [];
+    }
+  }
+
+  // Get all packages from all offerings (for paywall display)
+  static async getAllPackages(): Promise<PurchasesPackage[]> {
+    if (!this.isInitialized) await this.initialize();
+    try {
+      const offerings = await Purchases.getOfferings();
+      const packages: PurchasesPackage[] = [];
+      
+      // Collect packages from all offerings
+      if (offerings.all) {
+        for (const offering of Object.values(offerings.all)) {
+          if (offering.availablePackages) {
+            packages.push(...offering.availablePackages);
+          }
+        }
+      }
+      
+      return packages;
+    } catch (error: any) {
+      console.error('Error getting packages:', error);
+      return [];
+    }
+  }
+
+  // Purchase a package directly (replaces purchaseProduct)
+  static async purchasePackage(pkg: PurchasesPackage): Promise<{ success: boolean; error?: string }> {
+    if (!this.isInitialized) await this.initialize();
+    
+    try {
+      const purchaseResult = await Purchases.purchasePackage({ aPackage: pkg });
+      const entitlements: Record<string, any> = purchaseResult.customerInfo.entitlements || {};
+      const isPro = entitlements[ENTITLEMENT_ID]?.isActive || false;
+
+      if (isPro) {
+        this.cachedCustomerInfo = purchaseResult.customerInfo;
+        await SecureStorage.setCustomerInfo(purchaseResult.customerInfo);
+        await this.storePurchaseReceipt(purchaseResult.customerInfo);
+        return { success: true };
+      } else {
+        return { success: false, error: 'Purchase completed but entitlement not active' };
+      }
+    } catch (error: any) {
+      console.error('Error purchasing package:', error);
+      
+      let message = 'Purchase failed';
+      if (error.code === 1) {
+        message = 'Purchase cancelled by user';
+      } else if (error.code === 2) {
+        message = 'Network error - please check your connection';
+      } else if (error.code === 3) {
+        message = 'Purchase not allowed';
+      }
+      
+      return { success: false, error: error.message || message };
     }
   }
 

@@ -9,6 +9,7 @@ import languageService from "../services/languageService";
 import { Network } from "@capacitor/network";
 import { validateEmail, sanitizeInput } from "@/utils/securityUtils";
 import * as Sentry from "@sentry/react";
+import { LocalLogger } from "@/utils/LocalLogger";
 
 interface LoginScreenProps {
   onAuthSuccess: () => void;
@@ -57,56 +58,68 @@ export default function LoginScreen({
   };
 
   const handleFieldBlur = (field: keyof typeof touchedFields) => {
-    setTouchedFields(prev => ({ ...prev, [field]: true }));
+    setTouchedFields((prev) => ({ ...prev, [field]: true }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setTouchedFields({ email: true, password: true });
 
-    const { connected } = await Network.getStatus();
-    if (!connected) {
-      toast({
-        title: t("error"),
-        description: t("no_internet_auth"),
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (!isFormValid()) {
-      toast({
-        title: t("error"),
-        description: t("please_correct_errors"),
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsLoading("email");
     try {
+      const { connected } = await Network.getStatus();
+      if (!connected) {
+        toast({
+          title: t("error"),
+          description: t("no_internet_auth"),
+          variant: "destructive",
+        });
+        LocalLogger.log("Network disconnected on login attempt");
+        return;
+      }
+
+      if (!isFormValid()) {
+        toast({
+          title: t("error"),
+          description: t("please_correct_errors"),
+          variant: "destructive",
+        });
+        LocalLogger.log("Form validation failed", { email, password });
+        return;
+      }
+
+      setIsLoading("email");
+
       const sanitizedEmail = sanitizeInput(email);
       const sanitizedPassword = sanitizeInput(password);
+
       const user = await login(sanitizedEmail, sanitizedPassword);
       if (!user) {
         throw new Error("Login failed: No user returned");
       }
+
       if (!user.emailVerified) {
         toast({
-          title: t("verify_email"),
-          description: t("please_verify_email"),
+          title: t("email_not_verified"),
+          description: t("please_check_email"),
           variant: "destructive",
         });
+        setIsLoading(null);
         return;
       }
 
+      // Success toast
       toast({
-        title: t("success"),
-        description: t("welcome_back"),
+        title: t("welcome_back"),
+        description: t("login_successful"),
+        className: "bg-gradient-to-r from-green-400 to-teal-500 text-white shadow-lg rounded-lg",
       });
+
+      LocalLogger.log("Login successful", { email: sanitizedEmail });
       onAuthSuccess();
     } catch (error: any) {
       Sentry.captureException(error, { tags: { component: "LoginScreen", action: "email_login" } });
+      LocalLogger.error("Login error", error); // log error to local storage
+
       let errorMessage = t("login_failed");
       switch (error.code) {
         case "auth/invalid-email":
@@ -137,39 +150,53 @@ export default function LoginScreen({
   };
 
   const handleGoogleSignIn = async () => {
-    const { connected } = await Network.getStatus();
-    if (!connected) {
-      toast({
-        title: t("error"),
-        description: t("no_internet_auth"),
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsLoading("google");
     try {
-      Sentry.captureMessage("Initiating Google Sign-In", { level: "info", tags: { component: "LoginScreen", action: "google_signin" } });
+      const { connected } = await Network.getStatus();
+      if (!connected) {
+        toast({
+          title: t("error"),
+          description: t("no_internet_auth"),
+          variant: "destructive",
+        });
+        LocalLogger.log("Network disconnected on Google login attempt"); // log network error
+        return;
+      }
+
+      setIsLoading("google");
+      Sentry.captureMessage("Initiating Google Sign-In", {
+        level: "info",
+        tags: { component: "LoginScreen", action: "google_signin" },
+      });
+      LocalLogger.log("Initiating Google Sign-In"); // log action
+
       const user = await googleSignIn();
       if (!user) {
         throw new Error("Google sign-in failed: No user returned");
       }
+
       if (!user.emailVerified) {
         toast({
           title: t("verify_email"),
           description: t("google_email_not_verified"),
           variant: "destructive",
         });
+        LocalLogger.log("Google email not verified", { email }); // log
         return;
       }
 
+      // Success toast
       toast({
-        title: t("success"),
-        description: t("logged_in_google"),
+        title: t("welcome_back"),
+        description: t("google_login_successful"),
+        className: "bg-gradient-to-r from-green-400 to-teal-500 text-white shadow-lg rounded-lg",
       });
+      
+      LocalLogger.log("Google login success", { email: user.email });
       onAuthSuccess();
     } catch (error: any) {
       Sentry.captureException(error, { tags: { component: "LoginScreen", action: "google_signin" } });
+      LocalLogger.error("Google login error", error); // log error
+
       let errorMessage = t("google_login_failed");
       switch (error.code) {
         case "auth/popup-closed-by-user":

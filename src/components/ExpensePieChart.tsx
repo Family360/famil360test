@@ -8,6 +8,7 @@ import {
   Legend,
 } from 'recharts';
 import { currencyService } from '../services/currencyService';
+import { useLanguageContext } from '@/contexts/LanguageContext';
 import { cn } from '@/lib/utils';
 
 interface PieChartData {
@@ -50,10 +51,11 @@ const CustomLegend = ({ payload }: any) => (
 );
 
 const ExpensePieChart: React.FC<ExpensePieChartProps> = ({ data }) => {
+  const { t } = useLanguageContext();
   if (!data || data.length === 0) {
     return (
       <div className="flex items-center justify-center h-56 text-gray-600 dark:text-gray-400">
-        <p>No expense data for this period.</p>
+        <p>{t('no_expense_data_period')}</p>
       </div>
     );
   }

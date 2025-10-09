@@ -10,7 +10,7 @@ const SYMBOL_TO_ISO: Record<string, string> = {
 };
 
 class CurrencyService {
-  private currentCurrency: string = 'USD'; // fallback
+  private currentCurrency: string = 'USD'; // Default currency
 
   constructor() {
     this.loadCurrency();
@@ -23,24 +23,24 @@ class CurrencyService {
     return SYMBOL_TO_ISO[currency] || 'USD';
   }
 
-  private loadCurrency() {
-    const settings = localStorageService.getSettings();
+  private async loadCurrency() {
+    const settings = await localStorageService.getSettings();
     this.currentCurrency = this.mapToISO(settings.currency || 'USD');
   }
 
-  getCurrency(): string {
-    const settings = localStorageService.getSettings();
+  async getCurrency(): Promise<string> {
+    const settings = await localStorageService.getSettings();
     this.currentCurrency = this.mapToISO(settings.currency || 'USD');
     return this.currentCurrency;
   }
 
-  setCurrency(currency: string) {
+  async setCurrency(currency: string) {
     try {
       const isoCurrency = this.mapToISO(currency);
       this.currentCurrency = isoCurrency;
-      const settings = localStorageService.getSettings();
+      const settings = await localStorageService.getSettings();
       settings.currency = isoCurrency;
-      localStorageService.saveSettings(settings);
+      await localStorageService.saveSettings(settings);
     } catch (error) {
       console.error('Error setting currency:', error);
     }

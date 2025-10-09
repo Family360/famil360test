@@ -18,15 +18,14 @@ import { useToast } from "@/components/ui/use-toast";
 import { Package, Loader2, Utensils, Plus, Search, AlertTriangle, ArrowLeft } from "lucide-react";
 import InventoryForm from "@/components/inventory/InventoryForm";
 import InventoryList from "@/components/inventory/InventoryList";
+import InventoryAlerts from "@/components/InventoryAlerts";
+import languageService from "@/services/languageService";
+import { currencyService } from "@/services/currencyService";
 import { cn } from "@/lib/utils";
-// Change this line:
-import languageService from '../services/languageService';
-import { currencyService } from "../services/currencyService";
 
 interface InventoryManagementProps {
   onNavigate: (path: string) => void;
 }
-
 const ITEMS_PER_PAGE = 10;
 
 const InventoryManagement: React.FC<InventoryManagementProps> = ({ onNavigate }) => {
@@ -50,11 +49,11 @@ const InventoryManagement: React.FC<InventoryManagementProps> = ({ onNavigate })
     loadItems();
   }, []);
 
-  const loadItems = useCallback(() => {
+  const loadItems = useCallback(async () => {
     try {
       setIsLoading(true);
       setError(null);
-      const inventoryItems = localStorageService.getInventoryItems();
+      const inventoryItems = await localStorageService.getInventoryItems();
       setItems(inventoryItems);
     } catch (error) {
       const errorMessage = (error as Error).message || t("failed_to_load_inventory");
@@ -135,7 +134,7 @@ const InventoryManagement: React.FC<InventoryManagementProps> = ({ onNavigate })
 
   const filteredItems = useMemo(() => {
     return items.filter(item => {
-      if (filter === "lowStock" && item.quantity > item.lowStockAlert) return false;
+      if (filter === "lowStock" && item.stock > item.minStock) return false;
       return item.name.toLowerCase().includes(debouncedSearchQuery.toLowerCase());
     });
   }, [items, debouncedSearchQuery, filter]);
@@ -147,9 +146,9 @@ const InventoryManagement: React.FC<InventoryManagementProps> = ({ onNavigate })
 
   const inventoryStats = useMemo(() => {
     const totalItems = items.length;
-    const lowStockItems = items.filter(item => item.quantity <= item.lowStockAlert).length;
-    const outOfStockItems = items.filter(item => item.quantity === 0).length;
-    const totalValue = items.reduce((sum, item) => sum + (item.quantity * item.costPrice), 0);
+    const lowStockItems = items.filter(item => item.stock <= item.minStock).length;
+    const outOfStockItems = items.filter(item => item.stock === 0).length;
+    const totalValue = items.reduce((sum, item) => sum + (item.stock * item.costPrice), 0);
     
     return { totalItems, lowStockItems, outOfStockItems, totalValue };
   }, [items]);
@@ -182,7 +181,7 @@ const InventoryManagement: React.FC<InventoryManagementProps> = ({ onNavigate })
   }
 
   return (
-    <div className="px-4 py-4 pb-24 bg-gradient-to-br from-[#ffffff] via-[#f8f9fa] to-[#e9ecef] dark:from-[#1A1A2E] dark:via-[#16213E] dark:to-[#0F3460] min-h-screen">
+    <div className="px-4 py-4 pb-6 bg-gradient-to-br from-[#ffffff] via-[#f8f9fa] to-[#e9ecef] dark:from-[#1A1A2E] dark:via-[#16213E] dark:to-[#0F3460] min-h-screen">
       <style>
         {`
         @keyframes shimmer {
@@ -253,10 +252,10 @@ const InventoryManagement: React.FC<InventoryManagementProps> = ({ onNavigate })
         `}
       </style>
 
-      <div className="fixed top-0 left-0 w-full h-full pointer-events-none overflow-hidden z-0">
+      <div className="fixed top-0 left-0 w-full h-full pointer-events-none overflow-hidden z-0 bg-blob">
         <div className="absolute top-10 left-5 w-20 h-20 rounded-full bg-[#fff]/20 animate-float"></div>
-        <div className="absolute top-30 right-10 w-16 h-16 rounded-full bg [#fff]/30 animate-float" style={{ animationDelay: "1s" }}></div>
-        <div className="absolute bottom-20 left-15 w-24 h-24 rounded-full bg [#FFF5F0]/20 animate-float" style={{ animationDelay: "2s" }}></div>
+        <div className="absolute top-30 right-10 w-16 h-16 rounded-full bg-[#fff]/30 animate-float" style={{ animationDelay: "1s" }}></div>
+        <div className="absolute bottom-20 left-15 w-24 h-24 rounded-full bg-[#FFF5F0]/20 animate-float" style={{ animationDelay: "2s" }}></div>
       </div>
 
       <div className="mb-6 p-5 glass-card shadow-lg animate-fade-in z-10 relative overflow-hidden">
@@ -282,12 +281,13 @@ const InventoryManagement: React.FC<InventoryManagementProps> = ({ onNavigate })
           </div>
           <Button
             onClick={handleAddButtonClick}
-            className="flex items-center gap-2 bg-gradient-to-r from-[#ff7043] to [#ff9f43] text-white hover:from [#ff8a5b] hover:to [#ffb86c] transition-all duration-300 rounded-xl px-4 py-2 shadow-md hover:shadow-lg"
+            className="flex items-center gap-2 bg-gradient-to-r from-[#ff7043] to-[#ff9f43] text-white hover:from-[#ff8a5b] hover:to-[#ffb86c] transition-all duration-300 rounded-xl px-4 py-2 shadow-md hover:shadow-lg"
             aria-label={t("add_new_inventory_item")}
           >
             <Plus className="h-5 w-5" />
             {t("add_stock")}
           </Button>
+          <InventoryAlerts compact className="ml-2" />
         </div>
         <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-r from-transparent via-white/10 to-transparent animate-shimmer z-0" />
       </div>
@@ -332,6 +332,9 @@ const InventoryManagement: React.FC<InventoryManagementProps> = ({ onNavigate })
         </div>
       </div>
 
+      {/* Inventory Alerts */}
+      <InventoryAlerts className="mb-6" />
+
       <div className="glass-card p-4 mb-6 animate-fade-in delay-200">
         <div className="flex flex-col sm:flex-row gap-3">
           <div className="relative flex-1">
@@ -361,7 +364,7 @@ const InventoryManagement: React.FC<InventoryManagementProps> = ({ onNavigate })
               onClick={() => setFilter("lowStock")}
               className={`px-4 py-2.5 rounded-xl font-medium transition-colors flex items-center ${
                 filter === "lowStock"
-                  ? "bg-[#ff7043]/20 text [#ff7043] shadow-md"
+                  ? "bg-[#ff7043]/20 text-[#ff7043] shadow-md"
                   : "bg-white/30 dark:bg-gray-800/30 text-gray-600 dark:text-gray-400 hover:bg-white/40 dark:hover:bg-gray-800/40"
               }`}
               aria-label={t("show_low_stock_items")}
@@ -409,7 +412,7 @@ const InventoryManagement: React.FC<InventoryManagementProps> = ({ onNavigate })
                 <p className="text-gray-600 dark:text-gray-400 mb-4">{t("start_with_essential_ingredients")}</p>
                 <Button
                   onClick={handleAddButtonClick}
-                  className="mt-4 bg-gradient-to-r from-[#ff7043] to [#ff9f43] text-white hover:from [#ff8a5b] hover:to [#ffb86c] transition-all duration-300 rounded-xl px-4 py-2"
+                  className="mt-4 bg-gradient-to-r from-[#ff7043] to-[#ff9f43] text-white hover:from-[#ff8a5b] hover:to-[#ffb86c] transition-all duration-300 rounded-xl px-4 py-2"
                 >
                   <Plus size={16} className="mr-1" />
                   {t("add_first_item")}
@@ -441,7 +444,7 @@ const InventoryManagement: React.FC<InventoryManagementProps> = ({ onNavigate })
                 <AlertDialogCancel className="bg-white/70 dark:bg-gray-700/70 border-white/10 dark:border-gray-700/30">{t("cancel")}</AlertDialogCancel>
                 <AlertDialogAction
                   onClick={confirmDelete}
-                  className="bg-gradient-to-r from-[#ff7043] to [#ff9f43] text-white hover:from [#ff8a5b] hover:to [#ffb86c]"
+                  className="bg-gradient-to-r from-[#ff7043] to-[#ff9f43] text-white hover:from-[#ff8a5b] hover:to-[#ffb86c]"
                 >
                   {t("delete")}
                 </AlertDialogAction>
@@ -454,7 +457,7 @@ const InventoryManagement: React.FC<InventoryManagementProps> = ({ onNavigate })
       <div className="fixed bottom-20 right-6 z-10">
         <Button
           onClick={handleAddButtonClick}
-          className="w-14 h-14 rounded-full bg-gradient-to-r from-[#ff7043] to [#ff9f43] shadow-lg hover:shadow-xl hover:from [#ff8a5b] hover:to [#ffb86c] transition-all flex items-center justify-center"
+          className="w-14 h-14 rounded-full bg-gradient-to-r from-[#ff7043] to-[#ff9f43] shadow-lg hover:shadow-xl hover:from-[#ff8a5b] hover:to-[#ffb86c] transition-all flex items-center justify-center"
           aria-label={t("add_new_inventory_item")}
         >
           <Plus size={24} />

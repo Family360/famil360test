@@ -1,3 +1,4 @@
+// src/screens/SecuritySetup.tsx
 import React, { useState, useCallback, useEffect, useMemo } from "react";
 import Card from "@/components/Card";
 import Input from "@/components/Input";
@@ -43,7 +44,7 @@ const sanitizeInput = (input: string): string => {
   if (!input) return '';
   return input
     .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
+    .replace(/>/g, '&gt;') // FIXED: Added missing argument
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#x27;')
     .replace(/\//g, '&#x2F;')

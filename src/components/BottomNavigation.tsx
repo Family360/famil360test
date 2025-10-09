@@ -1,27 +1,27 @@
 // src/components/BottomNavigation.tsx
 import React from 'react';
 import { Home, ShoppingCart, Package, Settings, ReceiptText, BarChart3 } from 'lucide-react';
-import languageService from '../services/languageService';
+import { useLanguageContext } from '../contexts/LanguageContext';
 import { cn } from '@/lib/utils';
 
-type AppState = 'dashboard' | 'orders' | 'inventory' | 'expenses' | 'settings' | 'reports';
+export type AppState = 'dashboard' | 'orders' | 'inventory' | 'expenses' | 'reports' | 'settings';
 
 interface BottomNavigationProps {
   activeTab: AppState;
   onTabChange: (tab: AppState) => void;
 }
 
-const BottomNavigation = ({ activeTab, onTabChange }: BottomNavigationProps) => {
-  const t = (key: string) => languageService.translate(key) || key;
+const BottomNavigation = React.memo(({ activeTab, onTabChange }: BottomNavigationProps) => {
+  const { t } = useLanguageContext();
 
-  const tabs = [
-    { id: 'dashboard' as AppState, label: t('Dashboard'), icon: Home },
-    { id: 'orders' as AppState, label: t('Orders'), icon: ShoppingCart },
-    { id: 'inventory' as AppState, label: t('Inventory'), icon: Package },
-    { id: 'expenses' as AppState, label: t('Expenses'), icon: ReceiptText },
-    { id: 'reports' as AppState, label: t('Reports'), icon: BarChart3 },
-    { id: 'settings' as AppState, label: t('Settings'), icon: Settings },
-  ];
+  const tabs = React.useMemo(() => [
+    { id: 'dashboard' as AppState, label: t('dashboard'), icon: Home },
+    { id: 'orders' as AppState, label: t('orders'), icon: ShoppingCart },
+    { id: 'inventory' as AppState, label: t('inventory'), icon: Package },
+    { id: 'expenses' as AppState, label: t('expenses'), icon: ReceiptText },
+    { id: 'reports' as AppState, label: t('reports'), icon: BarChart3 },
+    { id: 'settings' as AppState, label: t('settings'), icon: Settings },
+  ], [t]);
 
   return (
     <>
@@ -140,6 +140,8 @@ const BottomNavigation = ({ activeTab, onTabChange }: BottomNavigationProps) => 
       </nav>
     </>
   );
-};
+});
+
+BottomNavigation.displayName = 'BottomNavigation';
 
 export default BottomNavigation;

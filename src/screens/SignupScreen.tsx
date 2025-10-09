@@ -9,7 +9,6 @@ import languageService from "../services/languageService";
 import { Network } from '@capacitor/network';
 import { Capacitor } from '@capacitor/core';
 import { FirebaseAuthentication } from '@capacitor-firebase/authentication';
-import { getAuth, sendEmailVerification } from 'firebase/auth';
 
 interface SignupScreenProps {
   onAuthSuccess: () => void;
@@ -86,6 +85,7 @@ export default function SignupScreen({
         await FirebaseAuthentication.sendEmailVerification();
       } else {
         // Use Firebase JS SDK for web
+        const { getAuth, sendEmailVerification } = await import("firebase/auth");
         const auth = getAuth();
         const firebaseUser = auth.currentUser;
         if (firebaseUser) {
@@ -95,9 +95,11 @@ export default function SignupScreen({
         }
       }
 
+      // Success toast
       toast({
-        title: t("success"),
+        title: t("account_created"),
         description: t("account_created_verify_email"),
+        className: "bg-gradient-to-r from-green-400 to-teal-500 text-white shadow-lg rounded-lg",
       });
       onAuthSuccess();
     } catch (error: any) {

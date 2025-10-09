@@ -1,5 +1,6 @@
 // src/screens/Reports.tsx
 import React, { useEffect, useState, useCallback } from "react"; // Updated import to fix JSX
+import { useLanguageContext } from "../contexts/LanguageContext";
 import Card from "../components/Card";
 import Button from "../components/Button";
 import ReportsModal from "../components/ReportsModal";
@@ -23,23 +24,27 @@ const Reports = ({ onNavigate }: ReportsProps) => {
   const [todayProfit, setTodayProfit] = useState<number>(0);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  const loadReportsData = useCallback(() => {
+  const { t } = useLanguageContext();
+
+  const loadReportsData = useCallback(async () => {
     const today = new Date('2025-09-01');
-    const orders = localStorageService.getOrders().filter(order => {
+    const allOrders = await localStorageService.getOrders();
+    const orders = allOrders.filter((order: any) => {
       const orderDate = new Date(order.date);
       return orderDate.toDateString() === today.toDateString();
     });
 
-    const sales = orders.reduce((sum, order) => sum + order.total, 0);
-    const expenses = localStorageService.getExpenses().filter(expense => {
+    const sales = orders.reduce((sum: number, order: any) => sum + order.total, 0);
+    const allExpenses = await localStorageService.getExpenses();
+    const expenses = allExpenses.filter((expense: any) => {
       const expenseDate = new Date(expense.date);
       return expenseDate.toDateString() === today.toDateString();
-    }).reduce((sum, expense) => sum + expense.amount, 0);
+    }).reduce((sum: number, expense: any) => sum + expense.amount, 0);
     const profit = sales - expenses;
 
     const itemsSold: { [key: string]: { name: string; quantity: number; revenue: number } } = {};
-    orders.forEach(order => {
-      order.items.forEach(item => {
+    orders.forEach((order: any) => {
+      order.items.forEach((item: any) => {
         if (!itemsSold[item.menuItemId]) {
           itemsSold[item.menuItemId] = { name: item.name, quantity: 0, revenue: 0 };
         }
@@ -52,7 +57,8 @@ const Reports = ({ onNavigate }: ReportsProps) => {
       .sort((a, b) => b.quantity - a.quantity)
       .slice(0, 5);
 
-    const lowStock = localStorageService.getInventoryItems().filter(item => item.quantity <= item.lowStockAlert);
+    const allInventory = await localStorageService.getInventoryItems();
+    const lowStock = allInventory.filter((item: any) => item.stock <= item.minStock);
 
     setTodaySales(sales);
     setTodayOrders(orders);
@@ -69,7 +75,7 @@ const Reports = ({ onNavigate }: ReportsProps) => {
   }, [loadReportsData]);
 
   return (
-    <div className="px-4 py-4 pb-24 bg-gradient-to-br from-[#ffffff] via-[#f8f9fa] to-[#e9ecef] dark:from-[#2A2119] dark:via-[#3D2F21] dark:to-[#4D3B2A] min-h-screen">
+    <div className="px-4 py-4 pb-6 bg-gradient-to-br from-[#ffffff] via-[#f8f9fa] to-[#e9ecef] dark:from-[#2A2119] dark:via-[#3D2F21] dark:to-[#4D3B2A] min-h-screen">
       <div className="mb-4">
         {/* @ts-ignore */}
         <Button
@@ -79,13 +85,13 @@ const Reports = ({ onNavigate }: ReportsProps) => {
         >
           {/* @ts-ignore */}
           <ArrowLeft size={18} />
-          Back to Dashboard
+          {t("back_to_dashboard")}
         </Button>
       </div>
 
       <header className="mb-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">Reports</h1>
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">{t("reports")}</h1>
           {/* @ts-ignore */}
           <Button
             onClick={() => setShowReportsModal(true)}
@@ -93,7 +99,7 @@ const Reports = ({ onNavigate }: ReportsProps) => {
           >
             {/* @ts-ignore */}
             <Download size={18} />
-            Download Report
+            {t("download_report")}
           </Button>
         </div>
         <p className="text-gray-600 dark:text-gray-300 mt-2">September 01, 2025</p>
@@ -112,7 +118,7 @@ const Reports = ({ onNavigate }: ReportsProps) => {
               {/* @ts-ignore */}
               <DollarSign className="text-[#ff7043] h-8 w-8" />
               <div>
-                <p className="text-sm text-gray-600 dark:text-gray-300">Today's Sales</p>
+                <p className="text-sm text-gray-600 dark:text-gray-300">{t("todays_sales")}</p>
                 <p className="text-xl font-semibold text-gray-900 dark:text-white">${todaySales.toFixed(2)}</p>
               </div>
             </Card>
@@ -120,7 +126,7 @@ const Reports = ({ onNavigate }: ReportsProps) => {
               {/* @ts-ignore */}
               <ShoppingBag className="text-[#1e88e5] h-8 w-8" />
               <div>
-                <p className="text-sm text-gray-600 dark:text-gray-300">Orders</p>
+                <p className="text-sm text-gray-600 dark:text-gray-300">{t("orders")}</p>
                 <p className="text-xl font-semibold text-gray-900 dark:text-white">{todayOrders.length}</p>
               </div>
             </Card>
@@ -128,7 +134,7 @@ const Reports = ({ onNavigate }: ReportsProps) => {
               {/* @ts-ignore */}
               <Wallet className="text-[#43a047] h-8 w-8" />
               <div>
-                <p className="text-sm text-gray-600 dark:text-gray-300">Profit</p>
+                <p className="text-sm text-gray-600 dark:text-gray-300">{t("profit")}</p>
                 <p className="text-xl font-semibold text-gray-900 dark:text-white">${todayProfit.toFixed(2)}</p>
               </div>
             </Card>
@@ -136,7 +142,7 @@ const Reports = ({ onNavigate }: ReportsProps) => {
               {/* @ts-ignore */}
               <TrendingUp className="text-[#ffb300] h-8 w-8" />
               <div>
-                <p className="text-sm text-gray-600 dark:text-gray-300">Avg. Order Value</p>
+                <p className="text-sm text-gray-600 dark:text-gray-300">{t("avg_order_value")}</p>
                 <p className="text-xl font-semibold text-gray-900 dark:text-white">${averageOrderValue.toFixed(2)}</p>
               </div>
             </Card>
@@ -147,10 +153,10 @@ const Reports = ({ onNavigate }: ReportsProps) => {
               <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
                 {/* @ts-ignore */}
                 <BarChart3 className="h-5 w-5 text-[#ff7043]" />
-                Top Selling Items
+                {t("top_selling_items")}
               </h2>
               {topSellingItems.length === 0 ? (
-                <p className="text-gray-600 dark:text-gray-300">No sales data available.</p>
+                <p className="text-gray-600 dark:text-gray-300">{t("no_sales_data")}</p>
               ) : (
                 <div className="space-y-3">
                   {topSellingItems.map((item, index) => (
@@ -159,7 +165,7 @@ const Reports = ({ onNavigate }: ReportsProps) => {
                         <span className="text-sm font-medium text-gray-900 dark:text-white">{item.name}</span>
                       </div>
                       <div className="text-right">
-                        <p className="text-sm text-gray-600 dark:text-gray-300">{item.quantity} sold</p>
+                        <p className="text-sm text-gray-600 dark:text-gray-300">{item.quantity} {t("sold")}</p>
                         <p className="text-sm font-semibold text-gray-900 dark:text-white">${item.revenue.toFixed(2)}</p>
                       </div>
                     </div>
@@ -172,10 +178,10 @@ const Reports = ({ onNavigate }: ReportsProps) => {
               <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
                 {/* @ts-ignore */}
                 <AlertTriangle className="h-5 w-5 text-[#ef5350]" />
-                Low Stock Alerts
+                {t("low_stock_alerts")}
               </h2>
               {lowStockItems.length === 0 ? (
-                <p className="text-gray-600 dark:text-gray-300">No low stock items.</p>
+                <p className="text-gray-600 dark:text-gray-300">{t("no_low_stock_items")}</p>
               ) : (
                 <div className="space-y-3">
                   {lowStockItems.map(item => (
@@ -185,7 +191,7 @@ const Reports = ({ onNavigate }: ReportsProps) => {
                         <Package className="h-5 w-5 text-[#ef5350]" />
                         <span className="text-sm font-medium text-gray-900 dark:text-white">{item.name}</span>
                       </div>
-                      <p className="text-sm text-[#ef5350]">{item.quantity} left</p>
+                      <p className="text-sm text-[#ef5350]">{item.stock} left</p>
                     </div>
                   ))}
                 </div>

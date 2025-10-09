@@ -20,6 +20,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { InventoryItem } from "@/services/localStorage";
+import { useLanguage } from "@/hooks/useLanguage";
 
 // Define props interface for InventoryList
 interface InventoryListProps {
@@ -30,6 +31,7 @@ interface InventoryListProps {
 
 const InventoryList: React.FC<InventoryListProps> = ({ items, onEdit, onDelete }) => {
   const [editingItem, setEditingItem] = React.useState<InventoryItem | null>(null);
+  const { t } = useLanguage();
 
   // Handle edit form submission
   const handleEditItem = () => {
@@ -44,22 +46,22 @@ const InventoryList: React.FC<InventoryListProps> = ({ items, onEdit, onDelete }
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Item</TableHead>
-            <TableHead>Quantity</TableHead>
-            <TableHead>Unit</TableHead>
-            <TableHead>Cost Price</TableHead>
-            <TableHead>Low Stock Alert</TableHead>
-            <TableHead>Actions</TableHead>
+            <TableHead>{t('item')}</TableHead>
+            <TableHead>{t('stock')}</TableHead>
+            <TableHead>{t('unit')}</TableHead>
+            <TableHead>{t('cost_price')}</TableHead>
+            <TableHead>{t('low_stock_alert')}</TableHead>
+            <TableHead>{t('actions')}</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {items.map((item) => (
             <TableRow key={item.id}>
               <TableCell>{item.name}</TableCell>
-              <TableCell>{item.quantity}</TableCell>
+              <TableCell>{item.stock}</TableCell>
               <TableCell>{item.unit}</TableCell>
               <TableCell>₹{item.costPrice.toFixed(2)}</TableCell>
-              <TableCell>{item.lowStockAlert}</TableCell>
+              <TableCell>{item.minStock}</TableCell>
               <TableCell>
                 {/* Edit Button */}
                 <Dialog>
@@ -69,18 +71,18 @@ const InventoryList: React.FC<InventoryListProps> = ({ items, onEdit, onDelete }
                       size="sm"
                       onClick={() => setEditingItem(item)}
                     >
-                      <Edit2 className="h-4 w-4 mr-1" /> Edit
+                      <Edit2 className="h-4 w-4 mr-1" /> {t('edit')}
                     </Button>
                   </DialogTrigger>
                   <DialogContent>
                     <DialogHeader>
-                      <DialogTitle>Edit Item</DialogTitle>
+                      <DialogTitle>{t('edit_item')}</DialogTitle>
                       <DialogDescription>
-                        Update the details of your inventory item.
+                        {t('update_item_details')}
                       </DialogDescription>
                     </DialogHeader>
                     <Input
-                      placeholder="Item name"
+                      placeholder={t('item_name')}
                       value={editingItem?.name || ""}
                       onChange={(e) =>
                         setEditingItem({
@@ -91,17 +93,17 @@ const InventoryList: React.FC<InventoryListProps> = ({ items, onEdit, onDelete }
                     />
                     <Input
                       type="number"
-                      placeholder="Quantity"
-                      value={editingItem?.quantity || 0}
+                      placeholder={t('stock')}
+                      value={editingItem?.stock || 0}
                       onChange={(e) =>
                         setEditingItem({
                           ...(editingItem as InventoryItem),
-                          quantity: Number(e.target.value),
+                          stock: Number(e.target.value),
                         })
                       }
                     />
                     <Input
-                      placeholder="Unit"
+                      placeholder={t('unit')}
                       value={editingItem?.unit || ""}
                       onChange={(e) =>
                         setEditingItem({
@@ -112,7 +114,7 @@ const InventoryList: React.FC<InventoryListProps> = ({ items, onEdit, onDelete }
                     />
                     <Input
                       type="number"
-                      placeholder="Cost Price"
+                      placeholder={t('cost_price')}
                       value={editingItem?.costPrice || 0}
                       onChange={(e) =>
                         setEditingItem({
@@ -123,17 +125,17 @@ const InventoryList: React.FC<InventoryListProps> = ({ items, onEdit, onDelete }
                     />
                     <Input
                       type="number"
-                      placeholder="Low Stock Alert"
-                      value={editingItem?.lowStockAlert || 0}
+                      placeholder={t('low_stock_alert')}
+                      value={editingItem?.minStock || 0}
                       onChange={(e) =>
                         setEditingItem({
                           ...(editingItem as InventoryItem),
-                          lowStockAlert: Number(e.target.value),
+                          minStock: Number(e.target.value),
                         })
                       }
                     />
                     <DialogFooter>
-                      <Button onClick={handleEditItem}>Save changes</Button>
+                      <Button onClick={handleEditItem}>{t('save_changes')}</Button>
                     </DialogFooter>
                   </DialogContent>
                 </Dialog>
@@ -145,7 +147,7 @@ const InventoryList: React.FC<InventoryListProps> = ({ items, onEdit, onDelete }
                   className="ml-2"
                   onClick={() => onDelete(item.id)}
                 >
-                  <Trash2 className="h-4 w-4 mr-1" /> Delete
+                  <Trash2 className="h-4 w-4 mr-1" /> {t('delete')}
                 </Button>
               </TableCell>
             </TableRow>
@@ -158,10 +160,10 @@ const InventoryList: React.FC<InventoryListProps> = ({ items, onEdit, onDelete }
         <div className="text-center py-12">
           <Package className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
           <h3 className="text-xl font-semibold text-foreground mb-2">
-            No inventory items
+            {t('no_inventory_items')}
           </h3>
           <p className="text-muted-foreground">
-            Add your first inventory item to get started.
+            {t('add_first_inventory_item')}
           </p>
         </div>
       )}

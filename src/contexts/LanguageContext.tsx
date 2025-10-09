@@ -5,42 +5,40 @@ interface LanguageContextType {
   currentLanguage: string;
   changeLanguage: (lang: string) => void;
   t: (key: string, params?: Record<string, string | number>) => string;
-  supportedLanguages: Language[];
   currentLanguageInfo: Language | undefined;
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
 export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [currentLanguage, setCurrentLanguage] = useState(languageService.getCurrentLanguage());
+  const [language, setLanguage] = useState(languageService.getCurrentLanguage());
+
+  const handleLanguageChange = React.useCallback(() => {
+    setLanguage(languageService.getCurrentLanguage());
+  }, []);
 
   useEffect(() => {
-    const handleLanguageChange = () => {
-      setCurrentLanguage(languageService.getCurrentLanguage());
-    };
-
     window.addEventListener('languageChanged', handleLanguageChange);
-
     return () => {
       window.removeEventListener('languageChanged', handleLanguageChange);
     };
+  }, [handleLanguageChange]);
+
+  const changeLanguage = React.useCallback((lang: string) => {
+    languageService.setLanguage(lang);
   }, []);
 
-  const changeLanguage = (lang: string) => {
-    languageService.setLanguage(lang);
-  };
+  const t = React.useCallback((key: string, params?: Record<string, string | number>) => {
+    return languageService.translate(key, params || {});
+  }, [language]);
 
-  const t = (key: string, params: Record<string, string | number> = {}) => {
-    return languageService.translate(key, params);
-  };
-
-  const value = {
-    currentLanguage,
+  const value = React.useMemo(() => ({
+    currentLanguage: language,
     changeLanguage,
     t,
     supportedLanguages: languageService.getSupportedLanguages(),
-    currentLanguageInfo: languageService.getCurrentLanguageInfo()
-  };
+    currentLanguageInfo: languageService.getCurrentLanguageInfo(),
+  }), [language, changeLanguage, t]);
 
   return (
     <LanguageContext.Provider value={value}>

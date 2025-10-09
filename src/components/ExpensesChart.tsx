@@ -1,6 +1,7 @@
 import React, { memo } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import languageService, { SUPPORTED_LANGUAGES } from '@/services/languageService';
+import { useLanguageContext } from '@/contexts/LanguageContext';
+import { SUPPORTED_LANGUAGES } from '@/services/languageService';
 
 import { cn } from '@/lib/utils';
 
@@ -13,8 +14,7 @@ interface ExpensesChartProps {
   data: ExpenseData[];
 }
 
-const CustomTooltip = ({ active, payload, label }: any) => {
-  const currentLang = SUPPORTED_LANGUAGES.find(lang => lang.code === languageService.getCurrentLanguage()) || SUPPORTED_LANGUAGES[0];
+const CustomTooltip = ({ active, payload, label, t, currentLang }: any) => {
   if (active && payload && payload.length) {
     return (
       <div
@@ -22,9 +22,9 @@ const CustomTooltip = ({ active, payload, label }: any) => {
         dir={currentLang.rtl ? 'rtl' : 'ltr'}
         role="tooltip"
       >
-        <p className="font-medium">{languageService.translate('Date')}: {label}</p>
+        <p className="font-medium">{t('Date')}: {label}</p>
         <p className="text-[#ff7043] dark:text-[#ffb86c]">
-          {languageService.translate('Total')}: {payload[0].value.toFixed(2)}
+          {t('Total')}: {payload[0].value.toFixed(2)}
         </p>
       </div>
     );
@@ -33,7 +33,8 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 };
 
 const ExpensesChart: React.FC<ExpensesChartProps> = ({ data }) => {
-  const currentLang = SUPPORTED_LANGUAGES.find(lang => lang.code === languageService.getCurrentLanguage()) || SUPPORTED_LANGUAGES[0];
+  const { t, currentLanguageInfo } = useLanguageContext();
+  const currentLang = currentLanguageInfo || SUPPORTED_LANGUAGES[0];
 
   // Validate data
   const isValidData = data && Array.isArray(data) && data.every(item => typeof item.date === 'string' && typeof item.total === 'number' && item.total >= 0);
@@ -90,7 +91,7 @@ const ExpensesChart: React.FC<ExpensesChartProps> = ({ data }) => {
           `}
         </style>
         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 dark:via-gray-700/10 to-transparent animate-shimmer z-0" />
-        <p className="text-sm text-gray-600 dark:text-gray-400">{languageService.translate('No data available')}</p>
+        <p className="text-sm text-gray-600 dark:text-gray-400">{t('No data available')}</p>
       </div>
     );
   }
@@ -100,7 +101,7 @@ const ExpensesChart: React.FC<ExpensesChartProps> = ({ data }) => {
       className="w-full h-[200px] sm:h-[300px] bg-white/20 dark:bg-gray-800/20 rounded-2xl border border-white/10 dark:border-gray-700/30 p-4 backdrop-blur-md relative overflow-hidden animate-fade-in stat-card"
       dir={currentLang.rtl ? 'rtl' : 'ltr'}
       role="figure"
-      aria-label={languageService.translate('Expenses over time')}
+      aria-label={t('Expenses over time')}
     >
       <style>
         {`
@@ -148,7 +149,7 @@ const ExpensesChart: React.FC<ExpensesChartProps> = ({ data }) => {
             className="text-gray-600 dark:text-gray-300"
             orientation={currentLang.rtl ? 'right' : 'left'}
           />
-          <Tooltip content={<CustomTooltip />} />
+          <Tooltip content={<CustomTooltip t={t} currentLang={currentLang} />} />
           <Bar
             dataKey="total"
             fill="url(#barGradient)"
@@ -165,11 +166,11 @@ const ExpensesChart: React.FC<ExpensesChartProps> = ({ data }) => {
         </BarChart>
       </ResponsiveContainer>
       <table className="sr-only" aria-hidden="false">
-        <caption>{languageService.translate('Expenses over time')}</caption>
+        <caption>{t('Expenses over time')}</caption>
         <thead>
           <tr>
-            <th>{languageService.translate('Date')}</th>
-            <th>{languageService.translate('Total')}</th>
+            <th>{t('Date')}</th>
+            <th>{t('Total')}</th>
           </tr>
         </thead>
         <tbody>

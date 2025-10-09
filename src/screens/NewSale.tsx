@@ -15,12 +15,16 @@ import {
   ArrowLeft,
   FileText,
   Clock,
-  Utensils
+  Utensils,
+  Store,
+  Truck,
+  ShoppingBag
 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from '@/lib/utils';
+import adsService from '@/services/adsService';
 
 interface NewSaleProps {
   onNavigate: (path: string) => void;
@@ -33,52 +37,7 @@ type CartItem = {
   quantity: number;
 };
 
-const DEFAULT_TRANSLATIONS = {
-  new_sale: 'New Sale',
-  back_to_dashboard: 'Back to Dashboard',
-  menu_items: 'Menu Items',
-  add_custom_item: 'Add Custom Item',
-  cancel: 'Cancel',
-  item_name: 'Item Name',
-  enter_item_name: 'Enter item name',
-  price: 'Price',
-  enter_price: 'Enter price',
-  category: 'Category',
-  enter_category: 'Enter category',
-  add_item: 'Add Item',
-  search_items: 'Search items...',
-  search_by_name_or_category: 'Search by name or category',
-  add_to_cart: 'Add to Cart',
-  out_of_stock: 'Out of Stock',
-  cart: 'Cart',
-  empty_cart: 'Your cart is empty',
-  subtotal: 'Subtotal',
-  tax: 'Tax',
-  total: 'Total',
-  customer_name: 'Customer Name',
-  enter_customer_name: 'Enter customer name',
-  payment_method: 'Payment Method',
-  cash: 'Cash',
-  upi: 'UPI',
-  card: 'Card',
-  notes: 'Notes',
-  enter_notes: 'Enter notes',
-  checkout: 'Checkout',
-  invoice: 'Invoice',
-  order_id: 'Order ID',
-  customer: 'Customer',
-  date: 'Date',
-  items: 'Items',
-  download_invoice: 'Download Invoice',
-  invalid_custom_item: 'Please enter valid item name and price',
-  order_created: 'Order created successfully',
-  customer_note: 'Customer Note',
-  preparation_time: 'Preparation Time',
-  minutes: 'minutes',
-  custom: 'Custom',
-  special_instructions: 'Special instructions',
-  estimated_prep_time: 'Estimated preparation time',
-};
+// Translations are sourced from languageService via useLanguage().
 
 const NewSale: React.FC<NewSaleProps> = ({ onNavigate }) => {
   const { language: currentLanguage } = useLanguage();
@@ -91,6 +50,7 @@ const NewSale: React.FC<NewSaleProps> = ({ onNavigate }) => {
   const [customerName, setCustomerName] = useState('');
   const [customerNote, setCustomerNote] = useState('');
   const [preparationTime, setPreparationTime] = useState('');
+  const [orderType, setOrderType] = useState<'dine-in' | 'delivery' | 'takeaway'>('dine-in');
   const [showCustomItemForm, setShowCustomItemForm] = useState(false);
   const [customItem, setCustomItem] = useState({
     name: '',
@@ -111,20 +71,25 @@ const NewSale: React.FC<NewSaleProps> = ({ onNavigate }) => {
     autoToken: true
   });
 
-  const translate = useCallback(
-    (key: string) => {
-      return DEFAULT_TRANSLATIONS[key as keyof typeof DEFAULT_TRANSLATIONS] || key;
-    },
-    []
-  );
+  const { t } = useLanguage();
+  const translate = useCallback((key: string, params?: Record<string, any>) => t(key, params), [t]);
 
-  const loadMenuItems = useCallback(() => {
-    const items = localStorageService.getMenuItems();
+  const loadMenuItems = useCallback(async () => {
+    const items = await localStorageService.getMenuItems();
     setMenuItems(items);
   }, []);
 
   useEffect(() => {
     loadMenuItems();
+    // Preload interstitial for free users
+    (async () => {
+      try {
+        const isPremium = typeof window !== 'undefined' && localStorage.getItem('is_premium') === 'true';
+        if (!isPremium) {
+          await adsService.loadInterstitial();
+        }
+      } catch {}
+    })();
   }, [loadMenuItems]);
 
   const filteredMenuItems = useMemo(() => {
@@ -230,7 +195,7 @@ const NewSale: React.FC<NewSaleProps> = ({ onNavigate }) => {
     });
   }, [customItem, addToCart, loadMenuItems, toast, translate]);
 
-  const handleCheckout = useCallback(() => {
+  const handleCheckout = useCallback(async () => {
     if (cart.length === 0) {
       toast({
         variant: 'destructive',
@@ -240,7 +205,7 @@ const NewSale: React.FC<NewSaleProps> = ({ onNavigate }) => {
       return;
     }
 
-    const orders = localStorageService.getOrders();
+    const orders = await localStorageService.getOrders();
     const tokenNumber = orders.length + 1;
     
     const order: Order = {
@@ -258,23 +223,51 @@ const NewSale: React.FC<NewSaleProps> = ({ onNavigate }) => {
       // New fields we added
       customerNote: customerNote,
       preparationTime: preparationTime ? parseInt(preparationTime) : undefined,
+      orderType: orderType,
     };
 
-    localStorageService.saveOrder(order);
-    setLastOrder(order);
-    setShowInvoice(true);
-    
-    // Reset form
-    setCart([]);
-    setCustomerName('');
-    setCustomerNote('');
-    setPreparationTime('');
-    
-    toast({
-      title: 'Order Created',
-      description: `Order #${tokenNumber} created successfully`,
-      className: 'bg-gradient-to-r from-green-400 to-teal-500 text-white',
-    });
+    try {
+      await localStorageService.saveOrder(order);
+      setLastOrder(order);
+      setShowInvoice(true);
+      
+      // Show interstitial for free users every 5th order
+      try {
+        const isPremium = typeof window !== 'undefined' && localStorage.getItem('is_premium') === 'true';
+        if (!isPremium) {
+          await adsService.maybeShowInterstitial(5);
+        }
+      } catch {}
+      
+      // Reset form
+      setCart([]);
+      setCustomerName('');
+      setCustomerNote('');
+      setPreparationTime('');
+      setOrderType('dine-in');
+      
+      toast({
+        title: translate('order_created'),
+        description: `Order #${tokenNumber} created successfully`,
+        className: 'bg-gradient-to-r from-green-400 to-teal-500 text-white',
+      });
+    } catch (error: any) {
+      if (error.message === 'FREE_LIMIT_REACHED_ORDERS') {
+        toast({
+          title: 'Free Limit Reached',
+          description: 'You have reached the 20 orders/month limit. Upgrade to Premium for unlimited orders.',
+          variant: 'destructive',
+        });
+        // Dispatch event to open upgrade modal
+        window.dispatchEvent(new CustomEvent('open-upgrade', { detail: { feature: 'Orders' } }));
+      } else {
+        toast({
+          title: 'Error',
+          description: error.message || 'Failed to save order',
+          variant: 'destructive',
+        });
+      }
+    }
   }, [cart, totalAmount, paymentMethod, customerName, customerNote, preparationTime, toast, translate]);
 
   const printReceipt = useCallback((order: Order) => {
@@ -649,6 +642,54 @@ const NewSale: React.FC<NewSaleProps> = ({ onNavigate }) => {
                           <option value="upi">{translate('upi')}</option>
                           <option value="card">{translate('card')}</option>
                         </select>
+                      </div>
+
+                      {/* Order Type Selection */}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                          {translate('order_type')}
+                        </label>
+                        <div className="grid grid-cols-3 gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setOrderType('dine-in')}
+                            className={cn(
+                              "p-3 rounded-lg border-2 transition-all duration-200 flex flex-col items-center justify-center gap-1",
+                              orderType === 'dine-in'
+                                ? "border-[#ff7043] bg-[#ff7043]/10 text-[#ff7043]"
+                                : "border-gray-300 dark:border-gray-600 bg-white/50 dark:bg-gray-800/30 hover:border-[#ff7043]/50"
+                            )}
+                          >
+                            <Store size={20} />
+                            <span className="text-xs font-medium">{translate('dine_in')}</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setOrderType('delivery')}
+                            className={cn(
+                              "p-3 rounded-lg border-2 transition-all duration-200 flex flex-col items-center justify-center gap-1",
+                              orderType === 'delivery'
+                                ? "border-[#ff7043] bg-[#ff7043]/10 text-[#ff7043]"
+                                : "border-gray-300 dark:border-gray-600 bg-white/50 dark:bg-gray-800/30 hover:border-[#ff7043]/50"
+                            )}
+                          >
+                            <Truck size={20} />
+                            <span className="text-xs font-medium">{translate('delivery')}</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setOrderType('takeaway')}
+                            className={cn(
+                              "p-3 rounded-lg border-2 transition-all duration-200 flex flex-col items-center justify-center gap-1",
+                              orderType === 'takeaway'
+                                ? "border-[#ff7043] bg-[#ff7043]/10 text-[#ff7043]"
+                                : "border-gray-300 dark:border-gray-600 bg-white/50 dark:bg-gray-800/30 hover:border-[#ff7043]/50"
+                            )}
+                          >
+                            <ShoppingBag size={20} />
+                            <span className="text-xs font-medium">{translate('takeaway')}</span>
+                          </button>
+                        </div>
                       </div>
 
                       {/* New Fields */}

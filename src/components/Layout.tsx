@@ -80,7 +80,6 @@ const LanguageItem = memo(({ lang, isSelected, onSelect }: {
     tabIndex={0}
     onKeyDown={(e) => e.key === 'Enter' && onSelect()}
   >
-    <span className="text-base mr-3">{lang.flag}</span>
     {lang.name}
   </div>
 ));
@@ -172,7 +171,7 @@ const Layout: React.FC<LayoutProps> = ({ children, className = '', showLanguageS
                   aria-label={`Select language, current language is ${currentLang.name}`}
                 >
                   <span dir={currentLang.rtl ? 'rtl' : 'ltr'} className="flex-1 truncate max-w-[120px] sm:max-w-[150px] text-sm font-medium">
-                    {currentLang.flag} {currentLang.name}
+                    {currentLang.name}
                   </span>
                   <ChevronDown size={16} className="text-[#ff7043]" aria-hidden="true" />
                 </Button>

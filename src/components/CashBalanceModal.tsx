@@ -1,5 +1,5 @@
 // src/components/CashBalanceModal.tsx
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -37,8 +37,15 @@ const CashBalanceModal = ({ isOpen, onClose, onSave }: CashBalanceModalProps) =>
     cashInHand: "",
     closingBalance: "",
   });
+  const [currency, setCurrency] = useState<string>("USD");
 
-  const currency = currencyService.getCurrency();
+  useEffect(() => {
+    const loadCurrency = async () => {
+      const curr = await currencyService.getCurrency();
+      setCurrency(curr);
+    };
+    loadCurrency();
+  }, []);
 
   const validateInput = (value: string, field: string): string => {
     if (!value) return `${field} is required`;

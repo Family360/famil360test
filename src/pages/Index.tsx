@@ -18,6 +18,7 @@ import SubscriptionReminderModal from "../components/SubscriptionReminderModal";
 import PricingModal from "../components/PricingModal";
 import { localStorageService, type UserProfile, type Settings as AppSettings } from "../services/localStorage";
 import { SubscriptionService, type SubscriptionPlan, subscriptionPlans } from "../services/subscriptionService";
+import * as Sentry from "@sentry/react"; // For error capture
 
 type AppState =
   | "welcome"
@@ -51,8 +52,18 @@ const Index = () => {
         setIsLoading(true);
         setError(null);
 
-        // Initialize RevenueCat
-        await SubscriptionService.setupRevenueCat();
+        // Initialize RevenueCat non-blocking with error handling
+        try {
+          await SubscriptionService.setupRevenueCat();
+        } catch (subError: any) {
+          Sentry.captureException(subError, { tags: { component: "Index", action: "setupRevenueCat" } });
+          console.error("RevenueCat init failed, proceeding without:", subError);
+          toast({
+            title: "Warning",
+            description: "Subscription service failed to initialize. Features may be limited.",
+            variant: "destructive",
+          });
+        }
 
         // Check subscription/trial
         const status = SubscriptionService.getSubscriptionStatus();
@@ -78,8 +89,8 @@ const Index = () => {
         }
 
         // Load saved profile/security
-        const savedProfile = localStorageService.getUserProfile();
-        const savedSecurity = localStorageService.getSecurityData();
+        const savedProfile = await localStorageService.getUserProfile();
+        const savedSecurity = await localStorageService.getSecurityData();
 
         if (savedProfile && savedSecurity) {
           setUserProfile(savedProfile);
@@ -92,8 +103,9 @@ const Index = () => {
         }
 
         setIsLoading(false);
-      } catch (error) {
-        console.error("Error initializing app:", error);
+      } catch (initError: any) {
+        Sentry.captureException(initError, { tags: { component: "Index", action: "initializeApp" } });
+        console.error("Error initializing app:", initError);
         setError("Failed to initialize app. Please refresh the page.");
         toast({
           title: "Error",
@@ -116,6 +128,7 @@ const Index = () => {
       email: profileData.email,
       stallName: profileData.businessName,
       createdAt: new Date().toISOString(),
+      profileComplete: false,
     };
 
     setUserProfile(newProfile);
@@ -132,9 +145,9 @@ const Index = () => {
 
     // Save default settings
     const defaultSettings: AppSettings = {
-      currency: "₹",
+      currency: "USD",
       language: "en",
-      country: "India",
+      country: "United States",
       theme: "light",
       notifications: true,
     };

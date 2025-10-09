@@ -4,7 +4,6 @@ import { currencyService } from '../services/currencyService';
 import { useToast } from '@/components/ui/use-toast';
 import { useLanguage } from '@/hooks/useLanguage';
 import { 
-  Loader2, 
   Plus, 
   Search, 
   Filter, 
@@ -23,9 +22,11 @@ import {
   Utensils,
   Truck,
   Package,
-  Eye,
   Printer,
-  FileText
+  FileText,
+  Edit,
+  Trash2,
+  Store
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -38,82 +39,27 @@ type OrdersListProps = {
   userProfile?: { fullName: string; email: string };
 };
 
-const DEFAULT_TRANSLATIONS = {
-  orders: 'Orders',
-  all_orders: 'All Orders',
-  search_orders: 'Search orders...',
-  filter_by_status: 'Filter by status',
-  sort_by: 'Sort by',
-  date: 'Date',
-  total: 'Total',
-  all_statuses: 'All Statuses',
-  pending: 'Pending',
-  preparing: 'Preparing',
-  completed: 'Completed',
-  cancelled: 'Cancelled',
-  loading_orders: 'Loading orders...',
-  no_orders_found: 'No orders found',
-  retry: 'Retry',
-  dashboard: 'Dashboard',
-  add_order: 'Add Order',
-  back: 'Back',
-  token: 'Token',
-  status: 'Status',
-  payment_method: 'Payment Method',
-  items: 'Items',
-  quantity: 'Qty',
-  price: 'Price',
-  view_details: 'View Details',
-  total_amount: 'Total Amount',
-  order_details: 'Order Details',
-  created_at: 'Created At',
-  refresh: 'Refresh',
-  latest_data_loaded: 'Latest data loaded successfully',
-  error: 'Error',
-  failed_to_load_orders: 'Failed to load orders',
-  cash: 'Cash',
-  card: 'Card',
-  digital: 'Digital',
-  order_id: 'Order ID',
-  recent_activity: 'Recent Activity',
-  manage_orders: 'Manage Orders',
-  order_status: 'Order Status',
-  filter_options: 'Filter Options',
-  sort_options: 'Sort Options',
-  print_receipt: 'Print Receipt',
-  download_pdf: 'Download PDF',
-  customer_note: 'Customer Note',
-  preparation_time: 'Prep Time',
-  minutes: 'minutes',
-  tax: 'Tax',
-  subtotal: 'Subtotal',
-};
+// Translations are now sourced from languageService; see central translations.
 
 const OrdersList: React.FC<OrdersListProps> = ({ onNavigate, onBack, userProfile }) => {
   const { toast } = useToast();
-  const { language: currentLanguage } = useLanguage();
+  const { t } = useLanguage();
+  const translate = useCallback((key: string, params?: Record<string, any>) => t(key, params), [t]);
 
-  const translate = useCallback(
-    (key: string, params?: Record<string, any>) => {
-      try {
-        return DEFAULT_TRANSLATIONS[key as keyof typeof DEFAULT_TRANSLATIONS] || key;
-      } catch (error) {
-        console.warn(`Translation failed for key: ${key}`, error);
-        return DEFAULT_TRANSLATIONS[key as keyof typeof DEFAULT_TRANSLATIONS] || key;
-      }
-    },
-    []
-  );
-
-  const [orders, setOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'preparing' | 'completed' | 'cancelled'>('all');
   const [sortBy, setSortBy] = useState<'date' | 'total'>('date');
+  const [currency, setCurrency] = useState('USD');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [activeMenuOrderId, setActiveMenuOrderId] = useState<string | null>(null);
+  const [deleteConfirmOrderId, setDeleteConfirmOrderId] = useState<string | null>(null);
+  const [forceRender, setForceRender] = useState(0);
+  const [orders, setOrders] = useState<Order[]>([]);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
-  const [forceRender, setForceRender] = useState(0);
 
   // Simple app settings
   const [appSettings, setAppSettings] = useState({
@@ -126,11 +72,11 @@ const OrdersList: React.FC<OrdersListProps> = ({ onNavigate, onBack, userProfile
     autoToken: true
   });
 
-  const loadOrders = useCallback(() => {
+  const loadOrders = useCallback(async () => {
     try {
       setIsLoading(true);
       setError(null);
-      const fetchedOrders = localStorageService.getOrders();
+      const fetchedOrders = await localStorageService.getOrders();
       setOrders(fetchedOrders);
     } catch (err) {
       const errorMessage = (err as Error).message || translate('failed_to_load_orders');
@@ -145,7 +91,7 @@ const OrdersList: React.FC<OrdersListProps> = ({ onNavigate, onBack, userProfile
       setIsLoading(false);
       setIsRefreshing(false);
     }
-  }, [toast, translate]);
+  }, [toast]);
 
   const refreshData = useCallback(() => {
     setIsRefreshing(true);
@@ -312,6 +258,40 @@ const OrdersList: React.FC<OrdersListProps> = ({ onNavigate, onBack, userProfile
     }
   }, [generateReceiptContent, toast]);
 
+  // Delete order handler
+  const handleDeleteOrder = useCallback(async (orderId: string) => {
+    try {
+      const allOrders = await localStorageService.getOrders();
+      const updatedOrders = allOrders.filter(order => order.id !== orderId);
+      // Save updated orders array
+      await localStorage.setItem('food_stall_orders', JSON.stringify(updatedOrders));
+      await loadOrders();
+      setDeleteConfirmOrderId(null);
+      setActiveMenuOrderId(null);
+      
+      toast({
+        title: translate('order_deleted'),
+        description: `Order ${orderId.slice(-6).toUpperCase()} has been deleted`,
+        className: "bg-green-100 text-green-800",
+      });
+    } catch (error) {
+      console.error('Delete order error:', error);
+      toast({
+        variant: 'destructive',
+        title: translate('error'),
+        description: translate('failed_to_delete'),
+      });
+    }
+  }, [loadOrders, toast, translate]);
+
+  // Edit order handler
+  const handleEditOrder = useCallback((orderId: string) => {
+    setActiveMenuOrderId(null);
+    if (onNavigate) {
+      onNavigate(`edit-order/${orderId}`);
+    }
+  }, [onNavigate]);
+
   useEffect(() => {
     loadOrders();
 
@@ -320,9 +300,143 @@ const OrdersList: React.FC<OrdersListProps> = ({ onNavigate, onBack, userProfile
         loadOrders();
       }
     };
+
     window.addEventListener('storage', handleStorageChange);
     return () => window.removeEventListener('storage', handleStorageChange);
-  }, [loadOrders]);
+  }, []);
+
+  // Memoized order card to avoid re-rendering when unrelated state changes
+  const MemoOrderCard = React.memo(({ order, index }: { order: Order; index: number }) => (
+    <div
+      key={order.id}
+      className={cn(
+        "glass-card p-4 shadow-md hover:shadow-lg transition-all duration-300 mobile-card bg-gradient-to-br from-[#ffffff]/70 to-[#f5f5f5]/70 dark:from-[#3C2B23]/50 dark:to-[#4D362A]/50 cursor-pointer animate-fade-in",
+        `delay-${Math.min(index * 100, 400)}`
+      )}
+      onClick={() => onNavigate && onNavigate(`order/${order.id}`)}
+      onKeyDown={(e) => e.key === 'Enter' && onNavigate && onNavigate(`order/${order.id}`)}
+      tabIndex={0}
+      role="button"
+      aria-label={`View order details for ${order.tokenDisplay || order.id}`}
+    >
+      <div className="flex justify-between items-start mb-3">
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-white/50 dark:bg-gray-800/30 rounded-lg">
+            <ShoppingBag size={20} className="text-[#ff7043]" />
+          </div>
+          <div>
+            <div className="font-bold text-gray-800 dark:text-gray-100 text-lg">
+              #{order.tokenDisplay || order.id.slice(-6).toUpperCase()}
+            </div>
+            <div className="text-xs text-gray-600 dark:text-gray-400 flex items-center gap-1">
+              <Calendar size={12} />
+              {new Date(order.createdAt).toLocaleString(undefined, { 
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+              })}
+            </div>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className={cn("px-2 py-1 rounded-full text-xs font-medium capitalize", getStatusColor(order.status || 'pending'))}>
+            {getStatusIcon(order.status)}
+            <span className="ml-1">{translate(order.status || 'pending')}</span>
+          </span>
+          <div className="relative">
+            <button 
+              className="p-1 rounded-full hover:bg-white/50 dark:hover:bg-gray-800/30 transition-colors"
+              onClick={(e) => {
+                e.stopPropagation();
+                setActiveMenuOrderId(activeMenuOrderId === order.id ? null : order.id);
+              }}
+            >
+              <MoreVertical size={16} className="text-gray-400" />
+            </button>
+            {activeMenuOrderId === order.id && (
+              <div className="absolute right-0 top-8 z-50 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+                <button
+                  className="w-full px-4 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 text-gray-700 dark:text-gray-300"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleEditOrder(order.id);
+                  }}
+                >
+                  <Edit size={14} />
+                  {translate('edit_order')}
+                </button>
+                <button
+                  className="w-full px-4 py-2 text-left text-sm hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2 text-red-600 dark:text-red-400"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setDeleteConfirmOrderId(order.id);
+                    setActiveMenuOrderId(null);
+                  }}
+                >
+                  <Trash2 size={14} />
+                  {translate('delete_order')}
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {order.customerNote && (
+        <div className="mb-3 p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+          <div className="text-xs text-blue-600 dark:text-blue-300 font-medium flex items-center gap-1">
+            <FileText size={12} />
+            {translate('customer_note')}:
+          </div>
+          <div className="text-sm text-blue-700 dark:text-blue-200 mt-1">
+            {order.customerNote}
+          </div>
+        </div>
+      )}
+
+      {order.preparationTime && (
+        <div className="mb-3 flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+          <Clock size={14} />
+          <span>{translate('preparation_time')}:</span>
+          <span className="font-medium text-[#ff9f43]">{order.preparationTime} {translate('minutes')}</span>
+        </div>
+      )}
+
+      <div className="mb-3">
+        <div className="grid grid-cols-2 gap-2 text-sm">
+          <div className="flex items-center gap-2">
+            <DollarSign size={14} className="text-green-600" />
+            <span className="text-gray-600 dark:text-gray-300">{translate('total')}: </span>
+            <span className="font-semibold">{currencyService.formatAmount(order.total)}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            {getPaymentMethodIcon(order.paymentMethod || 'cash')}
+            <span className="text-gray-600 dark:text-gray-300">{translate('payment_method')}: </span>
+            <span className="font-semibold capitalize">{(order.paymentMethod || 'cash')}</span>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+          <Utensils size={14} />
+          <span className="capitalize">{getOrderTypeLabel(order.orderType)}</span>
+        </div>
+        <Button
+          variant="outline"
+          onClick={(e) => { e.stopPropagation(); onNavigate && onNavigate(`order/${order.id}`); }}
+          className="px-3 py-1 text-xs"
+          aria-label={translate('view_details')}
+        >
+          {translate('view_details')}
+        </Button>
+      </div>
+    </div>
+  ));
+
+  MemoOrderCard.displayName = 'MemoOrderCard';
 
   useEffect(() => {
     if (typeof window !== 'undefined' && window.localStorage) {
@@ -331,6 +445,20 @@ const OrdersList: React.FC<OrdersListProps> = ({ onNavigate, onBack, userProfile
       document.documentElement.classList.toggle('dark', savedDarkMode);
     }
   }, []);
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = () => {
+      if (activeMenuOrderId) {
+        setActiveMenuOrderId(null);
+      }
+    };
+    
+    if (activeMenuOrderId) {
+      document.addEventListener('click', handleClickOutside);
+      return () => document.removeEventListener('click', handleClickOutside);
+    }
+  }, [activeMenuOrderId]);
 
   const filteredOrders = useMemo(() => {
     let filtered = orders.filter(order => {
@@ -392,6 +520,32 @@ const OrdersList: React.FC<OrdersListProps> = ({ onNavigate, onBack, userProfile
     }
   };
 
+  const getOrderTypeIcon = (orderType?: string) => {
+    switch (orderType) {
+      case 'dine-in':
+        return <Store size={14} className="text-blue-500" />;
+      case 'delivery':
+        return <Truck size={14} className="text-orange-500" />;
+      case 'takeaway':
+        return <ShoppingBag size={14} className="text-green-500" />;
+      default:
+        return <Store size={14} className="text-gray-500" />;
+    }
+  };
+
+  const getOrderTypeLabel = (orderType?: string) => {
+    switch (orderType) {
+      case 'dine-in':
+        return translate('dine_in');
+      case 'delivery':
+        return translate('delivery');
+      case 'takeaway':
+        return translate('takeaway');
+      default:
+        return translate('dine_in');
+    }
+  };
+
   const OrderSkeleton = () => (
     <div className="glass-card p-4 shadow-md hover:shadow-lg transition-all duration-300 mobile-card bg-gradient-to-br from-[#ffffff]/70 to-[#f5f5f5]/70 dark:from-[#3C2B23]/50 dark:to-[#4D362A]/50 animate-pulse">
       <div className="flex justify-between items-start mb-3">
@@ -412,7 +566,7 @@ const OrdersList: React.FC<OrdersListProps> = ({ onNavigate, onBack, userProfile
   return (
     <div
       key={forceRender}
-      className="min-h-screen px-4 py-4 bg-gradient-to-br from-[#ffffff] via-[#f8f9fa] to-[#e9ecef] dark:from-[#1A1A2E] dark:via-[#16213E] dark:to-[#0F3460] overflow-hidden"
+      className="min-h-screen px-4 py-4 bg-gradient-to-br from-[#ffffff] via-[#f8f9fa] to-[#e9ecef] dark:from-[#1A1A2E] dark:via-[#16213E] dark:to-[#0F3460]"
     >
       <style>
         {`
@@ -463,7 +617,7 @@ const OrdersList: React.FC<OrdersListProps> = ({ onNavigate, onBack, userProfile
       </style>
 
       {/* Animated Background Elements */}
-      <div className="fixed top-0 left-0 w-full h-full pointer-events-none overflow-hidden z-0">
+      <div className="fixed top-0 left-0 w-full h-full pointer-events-none overflow-hidden z-0 bg-blob">
         <div className="absolute top-10 left-5 w-20 h-20 rounded-full bg-[#e3f2fd]/50 animate-float"></div>
         <div className="absolute top-30 right-10 w-16 h-16 rounded-full bg-[#f3e5f5]/50 animate-float" style={{ animationDelay: '1s' }}></div>
         <div className="absolute bottom-20 left-15 w-24 h-24 rounded-full bg-[#e8f5e8]/50 animate-float" style={{ animationDelay: '2s' }}></div>
@@ -489,7 +643,7 @@ const OrdersList: React.FC<OrdersListProps> = ({ onNavigate, onBack, userProfile
             </div>
             <p className="text-gray-600 dark:text-gray-300 text-sm mt-2 animate-fade-in delay-100 flex items-center">
               <Sparkles size={14} className="mr-1" />
-              {translate('manage_orders')} – {filteredOrders.length} {translate('orders').toLowerCase()} found
+              {translate('manage_orders')} – {filteredOrders.length} {translate('orders').toLowerCase()} {translate('found')}
             </p>
           </div>
           <div className="flex flex-col sm:flex-row items-center gap-2">
@@ -607,8 +761,8 @@ const OrdersList: React.FC<OrdersListProps> = ({ onNavigate, onBack, userProfile
             </h3>
             <p className="text-gray-500 dark:text-gray-400 text-sm mb-4">
               {searchQuery || statusFilter !== 'all' 
-                ? 'Try adjusting your search or filter criteria'
-                : 'No orders have been created yet'
+                ? translate('no_orders_found')
+                : translate('no_orders_created_yet')
               }
             </p>
             {onNavigate && (
@@ -648,8 +802,7 @@ const OrdersList: React.FC<OrdersListProps> = ({ onNavigate, onBack, userProfile
                     </div>
                     <div className="text-xs text-gray-600 dark:text-gray-400 flex items-center gap-1">
                       <Calendar size={12} />
-                      {new Date(order.createdAt).toLocaleString('en-US', { 
-                        timeZone: 'Asia/Karachi',
+                      {new Date(order.createdAt).toLocaleString(undefined, { 
                         year: 'numeric',
                         month: 'short',
                         day: 'numeric',
@@ -662,17 +815,46 @@ const OrdersList: React.FC<OrdersListProps> = ({ onNavigate, onBack, userProfile
                 <div className="flex items-center gap-2">
                   <span className={cn("px-2 py-1 rounded-full text-xs font-medium capitalize", getStatusColor(order.status || 'pending'))}>
                     {getStatusIcon(order.status)}
-                    <span className="ml-1">{translate((order.status || 'pending') as keyof typeof DEFAULT_TRANSLATIONS)}</span>
+                    <span className="ml-1">{translate(order.status || 'pending')}</span>
                   </span>
-                  <button 
-                    className="p-1 rounded-full hover:bg-white/50 dark:hover:bg-gray-800/30 transition-colors"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      // Add receipt actions menu here
-                    }}
-                  >
-                    <MoreVertical size={16} className="text-gray-400" />
-                  </button>
+                  <div className="relative">
+                    <button 
+                      className="p-1 rounded-full hover:bg-white/50 dark:hover:bg-gray-800/30 transition-colors"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setActiveMenuOrderId(activeMenuOrderId === order.id ? null : order.id);
+                      }}
+                    >
+                      <MoreVertical size={16} className="text-gray-400" />
+                    </button>
+                    
+                    {/* Actions Menu */}
+                    {activeMenuOrderId === order.id && (
+                      <div className="absolute right-0 top-8 z-50 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+                        <button
+                          className="w-full px-4 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 text-gray-700 dark:text-gray-300"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEditOrder(order.id);
+                          }}
+                        >
+                          <Edit size={14} />
+                          {translate('edit_order')}
+                        </button>
+                        <button
+                          className="w-full px-4 py-2 text-left text-sm hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2 text-red-600 dark:text-red-400"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setDeleteConfirmOrderId(order.id);
+                            setActiveMenuOrderId(null);
+                          }}
+                        >
+                          <Trash2 size={14} />
+                          {translate('delete_order')}
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
 
@@ -722,16 +904,26 @@ const OrdersList: React.FC<OrdersListProps> = ({ onNavigate, onBack, userProfile
                 </div>
               </div>
 
-              <div className="flex justify-between items-center pt-3 border-t border-white/20 dark:border-gray-700/30">
-                <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-                  {getPaymentMethodIcon(order.paymentMethod)}
-                  <span className="capitalize">{order.paymentMethod}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-lg font-bold text-[#ff9f43] dark:text-[#ffb86c]">
-                    {currencyService.formatAmount(order.total)}
-                  </span>
-                  <ArrowRight size={16} className="text-gray-400" />
+              <div className="pt-3 border-t border-white/20 dark:border-gray-700/30 space-y-2">
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center gap-3 text-sm text-gray-600 dark:text-gray-400">
+                    <div className="flex items-center gap-1">
+                      {getPaymentMethodIcon(order.paymentMethod)}
+                      <span className="capitalize">{order.paymentMethod}</span>
+                    </div>
+                    {order.orderType && (
+                      <div className="flex items-center gap-1 px-2 py-1 bg-white/50 dark:bg-gray-800/30 rounded-full">
+                        {getOrderTypeIcon(order.orderType)}
+                        <span className="text-xs font-medium">{getOrderTypeLabel(order.orderType)}</span>
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg font-bold text-[#ff9f43] dark:text-[#ffb86c]">
+                      {currencyService.formatAmount(order.total)}
+                    </span>
+                    <ArrowRight size={16} className="text-gray-400" />
+                  </div>
                 </div>
               </div>
 
@@ -766,6 +958,41 @@ const OrdersList: React.FC<OrdersListProps> = ({ onNavigate, onBack, userProfile
           ))
         )}
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      {deleteConfirmOrderId && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-md w-full p-6 animate-fade-in">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-3 bg-red-100 dark:bg-red-900/30 rounded-full">
+                <Trash2 size={24} className="text-red-600 dark:text-red-400" />
+              </div>
+              <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100">
+                {translate('confirm_delete')}
+              </h3>
+            </div>
+            <p className="text-gray-600 dark:text-gray-400 mb-6">
+              {translate('confirm_delete_message')}
+            </p>
+            <div className="flex gap-3">
+              <Button
+                variant="outline"
+                onClick={() => setDeleteConfirmOrderId(null)}
+                className="flex-1"
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="default"
+                onClick={() => handleDeleteOrder(deleteConfirmOrderId)}
+                className="flex-1 bg-red-600 hover:bg-red-700 text-white"
+              >
+                {translate('delete_order')}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Floating Action Button for Mobile */}
       {onNavigate && (

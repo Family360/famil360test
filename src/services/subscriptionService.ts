@@ -1,4 +1,5 @@
 // src/services/subscriptionService.ts
+import { Capacitor } from '@capacitor/core';
 export interface SubscriptionPlan {
   id: "monthly" | "quarterly" | "yearly";
   name: string;
@@ -140,7 +141,9 @@ export class SubscriptionService {
 
   static activateSubscription(planId: SubscriptionPlan["id"]): void {
     const plan = subscriptionPlans.find((p) => p.id === planId);
-    if (!plan) return;
+    if (!plan) {
+      throw new Error(`Invalid plan ID: ${planId}`);
+    }
 
     const now = new Date();
     const endDate = new Date(now.getTime() + plan.duration * 86400000);
@@ -179,8 +182,29 @@ export class SubscriptionService {
   }
 
   static async setupRevenueCat(): Promise<void> {
-    // Mock implementation; replace with actual RevenueCat setup
-    console.log("RevenueCat setup");
+    try {
+      // Only setup RevenueCat for native platforms (iOS/Android)
+      if (Capacitor.getPlatform() === "android" || Capacitor.getPlatform() === "ios") {
+        const { Purchases } = await import("@revenuecat/purchases-capacitor");
+
+        // Configure RevenueCat with the appropriate API key
+        const apiKey = Capacitor.getPlatform() === "android"
+          ? import.meta.env.VITE_REVENUECAT_ANDROID_KEY
+          : import.meta.env.VITE_REVENUECAT_IOS_KEY;
+
+        if (apiKey) {
+          await Purchases.configure({ apiKey });
+          console.log("✅ RevenueCat configured successfully");
+        } else {
+          console.warn("⚠️ RevenueCat API key not found");
+        }
+      } else {
+        console.log("ℹ️ RevenueCat not available on web platform");
+      }
+    } catch (error) {
+      console.error("❌ RevenueCat setup failed:", error);
+      throw error;
+    }
   }
 
   static async getCurrentPlan(): Promise<SubscriptionPlan | null> {

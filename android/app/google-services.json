@@ -14,11 +14,35 @@
       },
       "oauth_client": [
         {
+          "client_id": "584492441445-1vsa0tq7v78ojaap5u17f1hido1n9trf.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.foodcart360.app",
+            "certificate_hash": "39877e26c668489bf31f4ef8c198e38325ea32a5"
+          }
+        },
+        {
+          "client_id": "584492441445-dt9brbscgr8dkhb00hsmkcp8j406a3ko.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.foodcart360.app",
+            "certificate_hash": "fdef39e044667fabc0f93ac62a23e623308622f3"
+          }
+        },
+        {
           "client_id": "584492441445-pboad5b668hs1n9vr6kg6dhd6g7kgv34.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "com.foodcart360.app",
             "certificate_hash": "c1a9e3fbe71d978c75a3bb356cb815663bd3dae9"
+          }
+        },
+        {
+          "client_id": "584492441445-tspv7nhbm80o2cjknrchahsnnlkm7m3n.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.foodcart360.app",
+            "certificate_hash": "28571d0224636a58303f0e9b1cbb2f556e8f62ac"
           }
         },
         {

@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { InventoryItem, localStorageService } from "@/services/localStorage";
 import { useToast } from "@/components/ui/use-toast";
+import { useLanguage } from "@/hooks/useLanguage";
 
 const unitOptions = ["kg", "units", "liters", "grams"];
 
@@ -24,14 +25,15 @@ const InventoryForm: React.FC<InventoryFormProps> = ({ editingItem, show, onSave
     costPrice: "",
   });
   const { toast } = useToast();
+  const { t } = useLanguage();
 
   useEffect(() => {
     if (editingItem) {
       setFormData({
         name: editingItem.name,
-        quantity: editingItem.quantity.toString(),
+        quantity: editingItem.stock.toString(),
         unit: editingItem.unit,
-        lowStockAlert: editingItem.lowStockAlert.toString(),
+        lowStockAlert: editingItem.minStock.toString(),
         costPrice: editingItem.costPrice.toString(),
       });
     } else {
@@ -53,8 +55,8 @@ const InventoryForm: React.FC<InventoryFormProps> = ({ editingItem, show, onSave
   const handleSubmit = useCallback(() => {
     if (!formData.name.trim() || !formData.quantity || isNaN(+formData.quantity) || +formData.quantity <= 0) {
       toast({
-        title: "Invalid Input",
-        description: "Please provide a valid name and quantity greater than 0.",
+        title: t('invalid_input'),
+        description: t('please_provide_valid_name_quantity'),
         variant: "destructive",
       });
       return;
@@ -63,9 +65,9 @@ const InventoryForm: React.FC<InventoryFormProps> = ({ editingItem, show, onSave
     const item: InventoryItem = {
       id: editingItem?.id || localStorageService.generateId(),
       name: formData.name.trim(),
-      quantity: +formData.quantity,
+      stock: +formData.quantity,
       unit: formData.unit,
-      lowStockAlert: +formData.lowStockAlert || 0,
+      minStock: +formData.lowStockAlert || 0,
       costPrice: +formData.costPrice || 0,
       createdAt: editingItem?.createdAt || new Date().toISOString(),
     };
@@ -78,13 +80,13 @@ const InventoryForm: React.FC<InventoryFormProps> = ({ editingItem, show, onSave
   return (
     <Card className="mb-6">
       <CardHeader>
-        <CardTitle>{editingItem ? "Edit Item" : "Add New Item"}</CardTitle>
+        <CardTitle>{editingItem ? t('edit_item') : t('add_new_item')}</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="flex flex-col md:flex-row gap-4">
           <div className="flex-1">
             <label className="block mb-2 text-sm font-medium text-foreground">
-              Item Name <span className="text-destructive">*</span>
+              {t('item_name')} <span className="text-destructive">*</span>
             </label>
             <Input
               name="name"
@@ -97,7 +99,7 @@ const InventoryForm: React.FC<InventoryFormProps> = ({ editingItem, show, onSave
           </div>
           <div className="flex-1">
             <label className="block mb-2 text-sm font-medium text-foreground">
-              Quantity <span className="text-destructive">*</span>
+              {t('quantity')} <span className="text-destructive">*</span>
             </label>
             <Input
               name="quantity"
@@ -111,14 +113,14 @@ const InventoryForm: React.FC<InventoryFormProps> = ({ editingItem, show, onSave
             />
           </div>
           <div className="flex-1">
-            <label className="block mb-2 text-sm font-medium text-foreground">Unit</label>
+            <label className="block mb-2 text-sm font-medium text-foreground">{t('unit')}</label>
             <Select
               name="unit"
               value={formData.unit}
               onValueChange={(value) => setFormData((prev) => ({ ...prev, unit: value }))}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Select unit" />
+                <SelectValue placeholder={t('select_unit')} />
               </SelectTrigger>
               <SelectContent>
                 {unitOptions.map((unit) => (
@@ -130,7 +132,7 @@ const InventoryForm: React.FC<InventoryFormProps> = ({ editingItem, show, onSave
             </Select>
           </div>
           <div className="flex-1">
-            <label className="block mb-2 text-sm font-medium text-foreground">Low Stock Alert</label>
+            <label className="block mb-2 text-sm font-medium text-foreground">{t('low_stock_alert')}</label>
             <Input
               name="lowStockAlert"
               type="number"
@@ -142,7 +144,7 @@ const InventoryForm: React.FC<InventoryFormProps> = ({ editingItem, show, onSave
             />
           </div>
           <div className="flex-1">
-            <label className="block mb-2 text-sm font-medium text-foreground">Cost Price</label>
+            <label className="block mb-2 text-sm font-medium text-foreground">{t('cost_price')}</label>
             <Input
               name="costPrice"
               type="number"
@@ -156,10 +158,10 @@ const InventoryForm: React.FC<InventoryFormProps> = ({ editingItem, show, onSave
         </div>
         <div className="flex justify-end gap-4 mt-4">
           <Button variant="outline" onClick={onCancel} aria-label="Cancel form">
-            Cancel
+            {t('cancel')}
           </Button>
           <Button onClick={handleSubmit} aria-label="Save inventory item">
-            {editingItem ? "Update" : "Add"}
+            {editingItem ? t('update') : t('add')}
           </Button>
         </div>
       </CardContent>
